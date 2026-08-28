@@ -1,10 +1,9 @@
 ---
-title: 2026 丘成桐青少年数学与人工智能夏令营课件
+title: 2026 丘成桐夏令营游记
 date: 2026-08-28
 category: 游记
 tags: [夏令营, 游记]
 description: 丘成桐青少年数学与人工智能夏令营游记
-hot: true
 type: article
 ---
 ## 夏令营前
