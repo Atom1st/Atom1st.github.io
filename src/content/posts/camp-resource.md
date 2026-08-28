@@ -14,7 +14,7 @@ type: resource
 
 课件以压缩包形式提供，请通过以下链接获取：
 
-- 迅雷下载：<https://pan.xunlei.com/s/VP022na3XSN1w6ugU-2oL_eXA1?pwd=b53y>
+- 迅雷下载：<https://pan.xunlei.com/s/VP070lKk9YR062Fb-w1ZgP3dA1?pwd=f7en>
 - 压缩包密码：`ilove101`
 
 ## 内容概览
