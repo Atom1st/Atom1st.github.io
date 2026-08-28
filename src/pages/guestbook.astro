@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Giscus from '../components/Giscus.astro';
+---
+<BaseLayout title="留言板">
+  <main class="content">
+    <h1 class="page-title">留言板</h1>
+    <p class="page-sub">欢迎在此留下你的想法、建议或问题</p>
+
+    <div class="card">
+      <p>这里是公开的留言区，使用 GitHub 账号登录后即可发言。文明交流，友善讨论。</p>
+    </div>
+
+    <Giscus />
+  </main>
+</BaseLayout>

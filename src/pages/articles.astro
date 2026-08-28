@@ -1,0 +1,19 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+
+const articles = (await getCollection('posts'))
+  .filter((p) => p.data.type === 'article')
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+<BaseLayout title="文章">
+  <main class="content">
+    <h1 class="page-title">文章</h1>
+    <p class="page-sub">全部技术文章，按发布时间倒序排列</p>
+
+    <div class="card-group">
+      {articles.map((e) => <ArticleCard entry={e} />)}
+    </div>
+  </main>
+</BaseLayout>

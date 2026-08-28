@@ -1,0 +1,51 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+
+const all = (await getCollection('posts')).filter((p) => p.data.type !== 'page');
+const latest = [...all]
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 5);
+const hot = all
+  .filter((p) => p.data.hot)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const fmt = (d: Date) => d.toISOString().slice(0, 10);
+---
+<BaseLayout>
+  <main class="content">
+    <h1 class="page-title">追求人工智能的至真至美</h1>
+    <p class="page-sub">有组织、有顺序、低门槛的 AI 与数学学习资源站</p>
+
+    <h2>本站简介</h2>
+    <p>从 1956 年的达特茅斯会议，到今天 DeepSeek、ChatGPT 这样的大模型，AI 正以前所未有的加速度发展。它比物理、历史等传统学科年轻得多，却已在不到一个世纪里深刻改变了我们的生活，有学者将其繁荣称作“第四次工业革命”。</p>
+    <p>本网站旨在提供有组织、有顺序、低门槛的学习资源，普惠全国 AI 小白（包括站长）。在这里你可以找到顶级高校的 PDF 讲义、有趣的代码范例，以及世界级研究成果的解读。</p>
+
+    <h2>最新文章</h2>
+    <div class="card-group">
+      {latest.map((e) => <ArticleCard entry={e} />)}
+    </div>
+
+    <h2>热门资源</h2>
+    <ul class="res-list">
+      {hot.map((e) => (
+        <li>
+          <div class="info">
+            <div class="t">{e.data.title}</div>
+            {e.data.description && <div class="d">{e.data.description}</div>}
+          </div>
+          <a class="btn" href={`/article/${e.id}`}>查看</a>
+        </li>
+      ))}
+    </ul>
+
+    <h2>快速导航</h2>
+    <div class="card-group">
+      <a class="card" href="/resources"><h3><i class="fas fa-folder-open"></i> 资源页</h3><p>下载与学习资料。</p></a>
+      <a class="card" href="/articles"><h3><i class="fas fa-book-open"></i> 文章页</h3><p>全部技术文章。</p></a>
+      <a class="card" href="/friends"><h3><i class="fas fa-link"></i> 友链</h3><p>朋友们的站点。</p></a>
+      <a class="card" href="/about"><h3><i class="fas fa-user"></i> 关于</h3><p>站长与本站故事。</p></a>
+      <a class="card" href="/guestbook"><h3><i class="fas fa-comments"></i> 留言板</h3><p>留下你的足迹。</p></a>
+    </div>
+  </main>
+</BaseLayout>

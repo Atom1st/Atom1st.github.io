@@ -1,0 +1,36 @@
+---
+import { site } from '../site';
+
+const path = Astro.url.pathname;
+function isActive(href: string): boolean {
+  if (href === '/') return path === '/';
+  return path === href || path.startsWith(href + '/');
+}
+---
+<aside class="sidebar" id="sidebar">
+  <div class="profile">
+    <img class="avatar" src={site.avatar} alt="头像" />
+    <div class="name">{site.name}</div>
+    <div class="bio">{site.bio}</div>
+  </div>
+
+  <nav class="nav">
+    {site.nav.map((item) => (
+      <a href={item.href} class={isActive(item.href) ? 'active' : ''}>
+        <i class={`fas ${item.icon}`}></i> {item.label}
+      </a>
+    ))}
+  </nav>
+
+  <div class="contact">
+    <h4>联系方式</h4>
+    <ul>
+      {site.contact.map((c) => (
+        <li>
+          <i class={`fas ${c.icon}`}></i>
+          <a href={c.href} target="_blank" rel="noopener">{c.label}</a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</aside>

@@ -1,0 +1,15 @@
+---
+import type { CollectionEntry } from 'astro:content';
+interface Props {
+  entry: CollectionEntry<'posts'>;
+}
+const { entry } = Astro.props;
+const fmt = entry.data.date.toISOString().slice(0, 10);
+---
+<a class="card" href={`/article/${entry.id}`}>
+  <h3>{entry.data.title}</h3>
+  {entry.data.description && <p>{entry.data.description}</p>}
+  <div class="meta">
+    <i class="far fa-calendar"></i> {fmt} · <i class="fas fa-folder"></i> {entry.data.category}
+  </div>
+</a>

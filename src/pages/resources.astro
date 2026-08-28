@@ -1,0 +1,28 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const resources = (await getCollection('posts'))
+  .filter((p) => p.data.type === 'resource' || p.data.hot)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const fmt = (d: Date) => d.toISOString().slice(0, 10);
+---
+<BaseLayout title="资源">
+  <main class="content">
+    <h1 class="page-title">资源页</h1>
+    <p class="page-sub">整理自顶级高校与公开会议的 PDF、实战与代码范例</p>
+
+    <ul class="res-list">
+      {resources.map((e) => (
+        <li>
+          <div class="info">
+            <div class="t">{e.data.title}</div>
+            {e.data.description && <div class="d">{e.data.description}</div>}
+            <div class="d"><i class="far fa-calendar"></i> {fmt(e.data.date)} · <i class="fas fa-folder"></i> {e.data.category}</div>
+          </div>
+          <a class="btn" href={`/article/${e.id}`}>查看</a>
+        </li>
+      ))}
+    </ul>
+  </main>
+</BaseLayout>

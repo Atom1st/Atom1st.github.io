@@ -1,0 +1,36 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ArticleMeta from '../../components/ArticleMeta.astro';
+import Giscus from '../../components/Giscus.astro';
+import { readingInfo } from '../../lib/reading';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => data.type !== 'page');
+  return posts.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const { words, minutes } = readingInfo(entry.body);
+---
+<BaseLayout title={entry.data.title}>
+  <main class="content">
+    <h1 class="page-title">{entry.data.title}</h1>
+    <ArticleMeta
+      date={entry.data.date}
+      category={entry.data.category}
+      words={words}
+      minutes={minutes}
+      tags={entry.data.tags}
+    />
+    <article class="article-body">
+      <Content />
+    </article>
+    <hr />
+    <Giscus />
+  </main>
+</BaseLayout>
