@@ -4,7 +4,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import ArticleCard from '../components/ArticleCard.astro';
 
 const all = (await getCollection('posts')).filter((p) => p.data.type !== 'page');
-const latest = [...all]
+const latest = all
+  .filter((p) => p.data.type === 'article')
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
   .slice(0, 5);
 const hot = all

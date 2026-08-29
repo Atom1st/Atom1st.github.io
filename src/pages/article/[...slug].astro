@@ -26,7 +26,14 @@ const { words, minutes } = readingInfo(entry.body);
       words={words}
       minutes={minutes}
       tags={entry.data.tags}
+      origin={entry.data.origin}
+      access={entry.data.access}
     />
+    {entry.data.access === 'protected' && (
+      <div class="notice protected">
+        <i class="fas fa-lock"></i> 本文为受保护内容
+      </div>
+    )}
     <article class="article-body">
       <Content />
     </article>

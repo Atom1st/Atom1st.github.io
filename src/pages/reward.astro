@@ -1,0 +1,26 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="打赏">
+  <main class="content">
+    <h1 class="page-title">打赏支持</h1>
+    <p class="page-sub">如果我的内容对你有帮助，欢迎请我喝杯咖啡 ☕</p>
+
+    <div class="card">
+      <p>你的支持是我持续创作的最大动力。扫描下方付款码即可打赏，金额随意，心意最重。</p>
+    </div>
+
+    <div class="qr-wrap">
+      <div class="qr-box">
+        <!-- 将付款码图片放到 public/reward-qr.png，然后替换下方占位内容 -->
+        <img
+          src="/reward-qr.png"
+          alt="打赏付款码"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+        />
+        <div class="qr-placeholder" style="display:none;">付款码待添加</div>
+      </div>
+      <p class="qr-tip">微信 / 支付宝 扫码打赏</p>
+    </div>
+  </main>
+</BaseLayout>

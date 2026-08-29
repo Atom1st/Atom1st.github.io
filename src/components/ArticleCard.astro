@@ -5,8 +5,14 @@ interface Props {
 }
 const { entry } = Astro.props;
 const fmt = entry.data.date.toISOString().slice(0, 10);
+const originLabel = entry.data.origin === 'original' ? '原创' : '搬运';
+const accessLabel = entry.data.access === 'public' ? '公共' : '受保护';
 ---
 <a class="card" href={`/article/${entry.id}`}>
+  <div class="badges">
+    <span class={`badge ${entry.data.origin}`}>{originLabel}</span>
+    <span class={`badge ${entry.data.access}`}>{accessLabel}</span>
+  </div>
   <h3>{entry.data.title}</h3>
   {entry.data.description && <p>{entry.data.description}</p>}
   <div class="meta">

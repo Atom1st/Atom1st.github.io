@@ -5,15 +5,21 @@ interface Props {
   words: number;
   minutes: number;
   tags: string[];
+  origin: 'original' | 'repost';
+  access: 'public' | 'protected';
 }
-const { date, category, words, minutes, tags } = Astro.props;
+const { date, category, words, minutes, tags, origin, access } = Astro.props;
 const fmt = date.toISOString().slice(0, 10);
+const originLabel = origin === 'original' ? '原创' : '搬运';
+const accessLabel = access === 'public' ? '公共' : '受保护';
 ---
 <div class="article-meta">
   <span class="item"><i class="far fa-calendar"></i> {fmt}</span>
   <span class="item"><i class="fas fa-folder"></i> {category}</span>
   <span class="item"><i class="fas fa-file-word"></i> {words} 字</span>
   <span class="item"><i class="far fa-clock"></i> 约 {minutes} 分钟</span>
+  <span class="item"><span class={`badge ${origin}`}>{originLabel}</span></span>
+  <span class="item"><span class={`badge ${access}`}>{accessLabel}</span></span>
   {tags.length > 0 && (
     <span class="item tags">
       {tags.map((t) => <span class="tag">{t}</span>)}
