@@ -16,21 +16,6 @@
     "hot": false
   },
   {
-    "id": "zzfun",
-    "title": "政治笑话",
-    "date": "2026-08-31",
-    "category": "记录",
-    "tags": [
-      "键政，长时间更新"
-    ],
-    "description": "政治笑话，基于生活，持续更新",
-    "type": "article",
-    "origin": "original",
-    "access": "protected",
-    "passwordHash": "",
-    "hot": false
-  },
-  {
     "id": "bayi",
     "title": "批判所谓“以军正义”之言论",
     "date": "2026-08-29",
