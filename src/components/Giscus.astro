@@ -20,7 +20,7 @@ const giscus = {
     data-reactions-enabled="1"
     data-emit-metadata="0"
     data-input-position="top"
-    data-theme="light"
+    data-theme="preferred_color_scheme"
     data-lang="zh-CN"
     data-loading="lazy"
     crossorigin="anonymous"
@@ -30,7 +30,6 @@ const giscus = {
 </section>
 
 <script is:inline>
-  const giscusScript = document.getElementById('giscus-script');
   const html = document.documentElement;
 
   function setGiscusTheme(theme) {
@@ -40,14 +39,19 @@ const giscus = {
     }
   }
 
-  // 初始化 Giscus 主题
-  const observer = new MutationObserver(() => {
+  function applyCurrentTheme() {
     const theme = html.getAttribute('data-theme') || 'light';
     setGiscusTheme(theme);
-  });
-  observer.observe(html, { attributes: true, attributeFilter: ['data-theme'] });
+  }
 
-  // 初始设置
-  const initialTheme = html.getAttribute('data-theme') || 'light';
-  setGiscusTheme(initialTheme);
+  // 监听 iframe 加载完成，然后应用主题
+  const giscusScript = document.getElementById('giscus-script');
+  giscusScript?.addEventListener('load', () => {
+    // 稍微延迟确保 iframe 完全初始化
+    setTimeout(applyCurrentTheme, 100);
+  });
+
+  // 监听主题变化
+  const observer = new MutationObserver(applyCurrentTheme);
+  observer.observe(html, { attributes: true, attributeFilter: ['data-theme'] });
 </script>

@@ -18,8 +18,11 @@ const accessLabel = access === 'public' ? '公共' : '受保护';
   <span class="item"><i class="fas fa-folder"></i> {category}</span>
   <span class="item"><i class="fas fa-file-word"></i> {words} 字</span>
   <span class="item"><i class="far fa-clock"></i> 约 {minutes} 分钟</span>
-  <span class="item"><span class={`badge ${origin}`}>{originLabel}</span></span>
-  <span class="item"><span class={`badge ${access}`}>{accessLabel}</span></span>
+  {access === 'protected' ? (
+    <span class="item"><span class="badge protected">{accessLabel}</span></span>
+  ) : (
+    <span class="item"><span class={`badge ${origin}`}>{originLabel}</span></span>
+  )}
   {tags.length > 0 && (
     <span class="item tags">
       {tags.map((t) => <span class="tag">{t}</span>)}
