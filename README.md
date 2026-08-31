@@ -139,6 +139,34 @@ access: public            # public=公开；protected=受保护（需密码）
 > GitHub Actions 构建时不会运行 encrypt 脚本，直接使用已提交的 `articles.json`。
 > 如果忘记运行 `bun run encrypt` 就推送，加密文章将不会出现在线上。
 
+### 3.2 删除 / 修改文章
+
+**删除公开文章**：直接删除对应的 `.md` 文件，然后运行一次 `bun run encrypt` 刷新 `articles.json`（否则该文章仍会残留在列表数据里）：
+
+```bash
+# 删除 src/content/posts/xxx.md
+bun run encrypt
+git add -A
+git commit -m "删除文章 xxx"
+git push origin main
+```
+
+**删除受保护文章**：除了删除 `.md` 源文件，还要**手动删除**对应的 `public/encrypted/{slug}.json` 密文文件，再运行 `bun run encrypt`（该命令会同步更新 `.gitignore`，移除已删除文章的忽略规则）：
+
+```bash
+# 1. 删除 src/content/posts/xxx.md
+# 2. 删除 public/encrypted/xxx.json
+# 3. 重新生成元数据
+bun run encrypt
+git add -A
+git commit -m "删除受保护文章 xxx"
+git push origin main
+```
+
+**修改公开文章**：直接编辑 `.md` 文件即可，`dev` 会自动刷新。若修改了 `title / date / description` 等能在列表显示的字段，建议也跑一次 `bun run encrypt` 让 `articles.json` 同步，否则列表页显示的是旧元数据。
+
+**修改受保护文章的密码或正文**：编辑 `.md`（改 `password` 或正文）→ `bun run encrypt` 重新加密 → 提交生成的 `public/encrypted/*.json` 与 `articles.json` 并推送。
+
 ---
 
 ## 四、添加一个资源 / 让它出现在「热门资源」
@@ -258,6 +286,28 @@ git push origin main
 > **注意**：本仓库 Pages 来源是 GitHub Actions，**不要**切回「从分支部署」，
 > 否则 GitHub 会用 Jekyll 去解析 `.astro` 源文件而报错。
 
+### 9.1 给 AI 的部署指南（本仓库注意事项）
+
+把这个仓库交给 AI 帮忙维护 / 部署时，请遵循以下要点，避免踩坑：
+
+- **不要改 GitHub Pages 来源**：部署方式固定为「GitHub Actions」，切回「从分支部署」会被 Jekyll 解析 `.astro` 报错。如误切回，请到 `Settings → Pages` 改回「GitHub Actions」。
+- **不要把加密文章源文件提交上去**：受保护文章的 `.md` 会由 `bun run encrypt` 自动加入 `.gitignore`。人工新增受保护文章时请记得运行该命令，**不要** `git add -f` 强制提交明文 md。
+- **每次推送前先本地验证**：依赖全新检出时先 `bun install`（首次）或 `bun install --frozen-lockfile`（CI 一致），再 `bun run build` 确认 0 报错。若新加了依赖，记得提交 `bun.lock`。
+- **绝不能跳过 `bun run encrypt`**：CI 构建时**不会**运行加密脚本，`articles.json` 和 `public/encrypted/*.json` 必须已提交。忘记运行会导致加密文章列表缺失。
+- **删除/改名文章时要同步清理**：删除受保护文章需同时删 `public/encrypted/{slug}.json`；删除/改名任何文章后都运行一次 `bun run encrypt` 刷新 `articles.json`。
+- **文章路由与文件名强相关**：`src/content/posts/{name}.md` → `/articles/{name}`。改动文件名即改变 URL，会产生死链，改名时留意其他页面引用。
+- **常见报错提示**：
+  - 404 打不开某篇文章 → 检查该文章 md 是否被 `.gitignore` 忽略而未提交（受保护文章常见）。
+  - 页面无 header/侧边栏样式 → 确认页面继承了 `BaseLayout`（`import BaseLayout from '../layouts/BaseLayout.astro'`），样式来自 `src/styles/global.css`。
+  - 新页面无菜单 → 在 `src/site.ts` 的 `nav` 数组加一项。
+- **完整操作流程（AI 自助部署）**：
+  1. `git pull` 拉取最新代码
+  2. 新增文章：在 `src/content/posts/` 写 md；受保护文章设置 `access: protected` + `password` 明文密码
+  3. `bun run encrypt`（新增/删除/修改任何文章后都建议跑一次）
+  4. `bun run build` 本地验证，产物正常
+  5. `git add -A && git commit -m "..." && git push origin main`
+  6. 等 GitHub Actions 构建约 1–2 分钟，访问线上地址确认
+
 ---
 
 ## 十、常用速查
@@ -268,6 +318,7 @@ git push origin main
 | 发资源 | 同上，`type: resource` |
 | 进主页热门 | md 里加 `hot: true` |
 | 文章加密 | md 里加 `access: protected` + `password: 明文密码`，然后 `bun run encrypt` |
+| 删除文章 | 删除 `.md`（受保护还要删 `public/encrypted/*.json`），然后 `bun run encrypt` |
 | 改关于页 | `src/content/posts/about.md` |
 | 加友链 | `src/pages/friends.astro` |
 | 改标题/头像/菜单/联系方式 | `src/site.ts` |
