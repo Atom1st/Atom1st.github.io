@@ -4,7 +4,7 @@
 
 新增功能：
 - ✅ **亮/暗模式切换**：右上角日月图标切换，跟随系统偏好，记忆用户选择
-- ✅ **文章密码保护**：受保护文章可设置 SHA-256 密码，客户端验证，同会话免重复输入
+- ✅ **文章 AES-256-GCM 加密**：受保护文章正文加密存储，用户输入密码解密，同会话免重复输入
 - ✅ **评论区主题同步**：Giscus 评论区自动跟随站点亮/暗模式
 
 线上地址：<https://atom1st.github.io>
@@ -42,23 +42,36 @@ bun run preview
 src/
 ├── site.ts                 # 站点信息：标题、头像、导航菜单、联系方式
 ├── content.config.ts       # 文章/资源集合的字段定义（frontmatter schema）
+├── data/
+│   └── articles.json       # 所有文章/资源的元数据（构建脚本生成，需提交）
 ├── components/             # 复用组件（Topbar / Sidebar / ArticleCard / ArticleMeta / Giscus）
 ├── layouts/
 │   └── BaseLayout.astro     # 全站框架（顶栏 + 侧边栏 + 全局样式 + KaTeX）
 ├── lib/
-│   └── reading.ts           # 字数 / 阅读时长统计
+│   ├── reading.ts           # 字数 / 阅读时长统计
+│   └── content-crypto.ts    # AES-256-GCM 加密/解密工具
 ├── pages/                  # 路由（一个 .astro 文件 = 一个页面）
 │   ├── index.astro          # 主页（最新文章 + 热门资源 + 快速导航）
-│   ├── articles.astro       # 文章列表
+│   ├── articles/
+│   │   ├── index.astro      # 文章列表
+│   │   └── [...slug].astro  # 单篇文章/资源页（按 md 文件名路由）
 │   ├── resources.astro      # 资源列表
 │   ├── friends.astro        # 友链
 │   ├── about.astro          # 关于（读取 about.md）
 │   ├── guestbook.astro      # 留言板（Giscus 评论）
-│   └── article/[...slug].astro  # 单篇文章/资源页（按 md 文件名路由）
+│   └── reward.astro         # 打赏
 ├── content/
 │   └── posts/               # 所有文章与资源，都是 .md 文件
 └── styles/
     └── global.css           # 全局样式（与原站 style.css 一致）
+scripts/
+├── encrypt-content.ts       # 构建脚本：加密受保护文章 + 生成 articles.json
+└── gen-password-hash.js     # 独立密码哈希生成器（仅供参考，encrypt 脚本已内置）
+public/
+└── encrypted/               # 加密后的文章内容（.json），需提交
+.github/
+└── workflows/
+    └── deploy.yml           # GitHub Actions 自动部署
 ```
 
 ---
@@ -66,21 +79,20 @@ src/
 ## 三、写一篇新文章
 
 在 `src/content/posts/` 下新建一个 `.md` 文件，文件名就是网址（去掉 `.md`）。
-例如 `src/content/posts/my-post.md` → 访问 `/article/my-post`。
+例如 `src/content/posts/my-post.md` → 访问 `/articles/my-post`。
 
 文件头部写 frontmatter：
 
 ```md
 ---
 title: 文章标题
-date: 2026-08-28          # 发布日期，决定“最新文章”排序
+date: 2026-08-28          # 发布日期，决定"最新文章"排序
 category: 教程            # 分类
 tags: [人工智能, 入门]     # 标签，可多个
 description: 一句话简介     # 卡片与列表里显示的摘要
 type: article             # article=文章；resource=资源；page=独立页(如关于)
 origin: original          # original=原创；repost=搬运（显示徽章）
 access: public            # public=公开；protected=受保护（需密码）
-password: ""              # 受保护时：SHA-256 密码哈希（见下文）
 ---
 正文用 Markdown 书写，支持：
 
@@ -94,28 +106,38 @@ password: ""              # 受保护时：SHA-256 密码哈希（见下文）
 - 主页「最新文章」区块（按 `date` 倒序，取前若干篇）
 - 「文章」页 `/articles`
 
-### 3.1 文章加密（受保护内容）
+### 3.1 文章加密（AES-256-GCM 受保护内容）
 
-1. 在 frontmatter 设置 `access: protected`
-2. 生成密码哈希：
-   ```bash
-   node scripts/gen-password-hash.js "你的密码"
-   # 输出如：8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92
+加密采用 **AES-256-GCM** 算法 + **PBKDF2** 密钥派生（100k 迭代），受保护文章的正文以密文形式存储在 `public/encrypted/` 目录，`dist/` 构建产物中不含明文。
+
+**添加/修改受保护文章的流程：**
+
+1. 在 frontmatter 中设置 `access: protected`，并写入**明文密码**：
+   ```md
+   ---
+   title: 秘密文档
+   date: 2026-08-31
+   category: 内部
+   access: protected
+   password: 你的密码
+   ---
    ```
-3. 将输出的哈希值填入 `password` 字段
-4. 用户访问时需输入密码，验证通过后才显示内容（验证状态保存在 sessionStorage，同一会话免重复输入）
 
-示例：
-```md
----
-title: 秘密文档
-date: 2026-08-31
-category: 内部
-access: protected
-password: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92"
----
-这是加密内容……
-```
+2. 运行加密脚本（自动生成 `articles.json` 和 `public/encrypted/*.json`）：
+   ```bash
+   bun run encrypt
+   ```
+
+3. 提交生成的文件并推送：
+   ```bash
+   git add -A
+   git commit -m "添加/更新加密文章"
+   git push origin main
+   ```
+
+> **重要**：`src/data/articles.json` 和 `public/encrypted/*.json` **必须提交到仓库**。
+> GitHub Actions 构建时不会运行 encrypt 脚本，直接使用已提交的 `articles.json`。
+> 如果忘记运行 `bun run encrypt` 就推送，加密文章将不会出现在线上。
 
 ---
 
@@ -202,10 +224,11 @@ export const site = {
 
 ## 九、部署（GitHub Pages）
 
-仓库已配置 `.github/workflows/deploy.yml`：每次 push 到 `main` 会自动
-`bun install → bun run build → 部署 dist/`。
+### 自动部署
 
-前提（一次性设置，已配好可跳过）：仓库 `Settings → Pages → Build and deployment → Source` 选 **GitHub Actions**。
+仓库已配置 `.github/workflows/deploy.yml`：每次 push 到 `main` 会自动执行 `bun install → bun run build → 部署 dist/`。
+
+前提（一次性设置）：仓库 `Settings → Pages → Build and deployment → Source` 选 **GitHub Actions**。
 
 ```bash
 # 提交并推送即触发部署
@@ -216,7 +239,24 @@ git push origin main
 
 约 1–2 分钟后访问 <https://atom1st.github.io> 即为最新版。
 
-> 注意：本仓库 Pages 来源是 GitHub Actions，**不要**切回「从分支部署」，否则 GitHub 会用 Jekyll 去解析 `.astro` 源文件而报错（历史里那条 `pages build and deployment` 失败记录即由此产生，属一次性残留，不影响线上）。
+### 完整工作流
+
+**日常改文章（公开）**：直接编辑 `src/content/posts/` 下的 md 文件 → 推送即可。
+
+**添加/修改受保护文章**：
+
+```bash
+# 1. 编辑 md 文件（设置 access: protected + password: 明文密码）
+# 2. 运行加密脚本
+bun run encrypt
+# 3. 提交并推送（articles.json 和 encrypted/*.json 会提交到仓库）
+git add -A
+git commit -m "添加/更新加密文章"
+git push origin main
+```
+
+> **注意**：本仓库 Pages 来源是 GitHub Actions，**不要**切回「从分支部署」，
+> 否则 GitHub 会用 Jekyll 去解析 `.astro` 源文件而报错。
 
 ---
 
@@ -227,8 +267,7 @@ git push origin main
 | 发文章 | `src/content/posts/` 新建 `.md`（`type: article`） |
 | 发资源 | 同上，`type: resource` |
 | 进主页热门 | md 里加 `hot: true` |
-| 文章加密 | md 里加 `access: protected` + `password: "哈希值"` |
-| 生成密码哈希 | `node scripts/gen-password-hash.js "密码"` |
+| 文章加密 | md 里加 `access: protected` + `password: 明文密码`，然后 `bun run encrypt` |
 | 改关于页 | `src/content/posts/about.md` |
 | 加友链 | `src/pages/friends.astro` |
 | 改标题/头像/菜单/联系方式 | `src/site.ts` |
@@ -239,7 +278,7 @@ git push origin main
 
 ## 十一、亮/暗模式说明
 
-- 右上角顶栏显示 ☀️/🌙 图标，点击切换
+- 右上角顶栏显示 日/月 图标，点击切换
 - 首次访问跟随系统偏好（`prefers-color-scheme`）
 - 用户手动切换后记忆到 `localStorage`，下次访问恢复选择
 - Giscus 评论区自动同步主题变化

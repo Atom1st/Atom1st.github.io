@@ -5,7 +5,6 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "prebuild": "tsx scripts/encrypt-content.ts",
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
