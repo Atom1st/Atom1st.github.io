@@ -7,7 +7,7 @@ description: 这是一篇受密码保护的文章示例
 type: article
 origin: original
 access: protected
-password: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92"
+password: "123456"
 ---
 
 这是一篇受密码保护的文章。密码是 `123456`。
