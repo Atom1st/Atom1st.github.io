@@ -23,7 +23,7 @@ const hot = all
     <h2>最新文章</h2>
     <div class="card-group">
       {latest.map((e) => (
-        <a class="card" href={`/article/${e.id}`}>
+        <a class="card" href={`/articles/${e.id}`}>
           <div class="badges">
             <span class={`badge ${e.origin}`}>{e.origin === 'original' ? '原创' : '搬运'}</span>
             <span class={`badge ${e.access}`}>{e.access === 'public' ? '公共' : '受保护'}</span>
@@ -45,7 +45,7 @@ const hot = all
             <div class="t">{e.title}</div>
             {e.description && <div class="d">{e.description}</div>}
           </div>
-          <a class="btn" href={`/article/${e.id}`}>查看</a>
+          <a class="btn" href={`/articles/${e.id}`}>查看</a>
         </li>
       ))}
     </ul>

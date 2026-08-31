@@ -12,7 +12,8 @@
     "type": "article",
     "origin": "original",
     "access": "protected",
-    "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92"
+    "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+    "hot": false
   },
   {
     "id": "zzfun",
@@ -26,7 +27,8 @@
     "type": "article",
     "origin": "original",
     "access": "protected",
-    "passwordHash": ""
+    "passwordHash": "",
+    "hot": false
   },
   {
     "id": "bayi",
@@ -40,7 +42,8 @@
     "type": "article",
     "origin": "original",
     "access": "public",
-    "passwordHash": ""
+    "passwordHash": "",
+    "hot": false
   },
   {
     "id": "camp-travel-note",
@@ -55,7 +58,8 @@
     "type": "article",
     "origin": "original",
     "access": "public",
-    "passwordHash": ""
+    "passwordHash": "",
+    "hot": false
   },
   {
     "id": "about",
@@ -70,7 +74,8 @@
     "type": "page",
     "origin": "original",
     "access": "public",
-    "passwordHash": ""
+    "passwordHash": "",
+    "hot": false
   },
   {
     "id": "ai-intro",
@@ -86,7 +91,8 @@
     "type": "article",
     "origin": "original",
     "access": "public",
-    "passwordHash": ""
+    "passwordHash": "",
+    "hot": false
   },
   {
     "id": "math-ai",
@@ -103,7 +109,8 @@
     "type": "article",
     "origin": "original",
     "access": "public",
-    "passwordHash": ""
+    "passwordHash": "",
+    "hot": false
   },
   {
     "id": "camp-resource",
@@ -120,6 +127,7 @@
     "type": "resource",
     "origin": "original",
     "access": "public",
-    "passwordHash": ""
+    "passwordHash": "",
+    "hot": true
   }
 ]

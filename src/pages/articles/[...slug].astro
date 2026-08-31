@@ -18,9 +18,9 @@ export async function getStaticPaths() {
       props: { entry, isEncrypted: false },
     }));
 
-  // 从 articles.json 获取受保护文章（需要有密码哈希）
+  // 从 articles.json 获取受保护文章
   const encryptedPaths = allMeta
-    .filter((m) => m.type !== 'page' && m.access === 'protected' && m.passwordHash)
+    .filter((m) => m.type !== 'page' && m.access === 'protected')
     .map((m) => ({
       params: { slug: m.id },
       props: {

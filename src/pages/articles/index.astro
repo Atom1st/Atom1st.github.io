@@ -1,6 +1,6 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import articlesData from '../data/articles.json';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import articlesData from '../../data/articles.json';
 
 const articles = (articlesData as any[])
   .filter((p) => p.type === 'article')
@@ -13,7 +13,7 @@ const articles = (articlesData as any[])
 
     <div class="card-group">
       {articles.map((e) => (
-        <a class="card" href={`/article/${e.id}`}>
+        <a class="card" href={`/articles/${e.id}`}>
           <div class="badges">
             <span class={`badge ${e.origin}`}>{e.origin === 'original' ? '原创' : '搬运'}</span>
             <span class={`badge ${e.access}`}>{e.access === 'public' ? '公共' : '受保护'}</span>

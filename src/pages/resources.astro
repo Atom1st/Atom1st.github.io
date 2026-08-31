@@ -19,7 +19,7 @@ const resources = (articlesData as any[])
             {e.description && <div class="d">{e.description}</div>}
             <div class="d"><i class="far fa-calendar"></i> {e.date} · <i class="fas fa-folder"></i> {e.category}</div>
           </div>
-          <a class="btn" href={`/article/${e.id}`}>查看</a>
+          <a class="btn" href={`/articles/${e.id}`}>查看</a>
         </li>
       ))}
     </ul>

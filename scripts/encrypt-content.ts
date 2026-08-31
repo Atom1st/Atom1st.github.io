@@ -29,6 +29,7 @@ interface ArticleMeta {
   origin: string;
   access: string;
   passwordHash: string;
+  hot: boolean;
 }
 
 function parseFrontmatter(content: string): { data: Record<string, any>; body: string } {
@@ -87,6 +88,7 @@ function main() {
       origin: data.origin || 'original',
       access: data.access || 'public',
       passwordHash: '',
+      hot: data.hot === true,
     };
 
     // 加密受保护文章
