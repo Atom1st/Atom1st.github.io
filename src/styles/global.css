@@ -4,15 +4,15 @@
    ========================================================= */
 
 :root {
-    --bg: #F6F8FA;            /* 主背景：极昼白 */
-    --paper: #FFFFFF;         /* 次背景：面板灰 */
-    --border: #D0D7DE;        /* 边框/分割线：细线灰 */
-    --accent: #0969DA;        /* 主色调：深海蓝（链接/按钮/主强调） */
-    --accent-dark: #0860CA;   /* 主色调按下/悬停态 */
-    --success: #1F883D;       /* 辅助色：青瓷（成功/数据增长） */
-    --muted: #656D76;         /* 强调色/次要文字：靛青·铅灰 */
-    --warning: #9A6700;       /* 警示色：琥珀（受保护内容） */
-    --text: #1F2328;          /* 正文：墨黑 */
+    --bg: #F6F8FA;
+    --paper: #FFFFFF;
+    --border: #D0D7DE;
+    --accent: #0969DA;
+    --accent-dark: #0860CA;
+    --success: #1F883D;
+    --muted: #656D76;
+    --warning: #9A6700;
+    --text: #1F2328;
     --code-bg: #F6F8FA;
     --sidebar: #0D1117;
     --sidebar-fg: #C9D1D9;
@@ -20,6 +20,23 @@
     --sidebar-line: #21262D;
     --sidebar-w: 270px;
     --topbar-h: 60px;
+}
+
+[data-theme="dark"] {
+    --bg: #0D1117;
+    --paper: #161B22;
+    --border: #30363D;
+    --accent: #58A6FF;
+    --accent-dark: #79B8FF;
+    --success: #3FB950;
+    --muted: #8B949E;
+    --warning: #D29922;
+    --text: #E6EDF3;
+    --code-bg: #0D1117;
+    --sidebar: #010409;
+    --sidebar-fg: #E6EDF3;
+    --sidebar-muted: #8B949E;
+    --sidebar-line: #21262D;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -55,6 +72,31 @@ a:hover { color: var(--accent); text-decoration: underline; }
     font-size: 20px;
     font-weight: 800;
     letter-spacing: 1px;
+}
+
+.theme-toggle {
+    margin-left: auto;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s;
+}
+.theme-toggle:hover {
+    background: rgba(255,255,255,0.25);
+}
+[data-theme="dark"] .theme-toggle {
+    background: rgba(255,255,255,0.1);
+}
+[data-theme="dark"] .theme-toggle:hover {
+    background: rgba(255,255,255,0.2);
 }
 
 /* ===================== 侧边栏 ===================== */
@@ -377,6 +419,59 @@ input:focus, textarea:focus, select:focus {
 
 /* ===================== 打赏页 ===================== */
 .qr-wrap { text-align: center; margin: 28px 0; }
+
+/* ===================== 密码保护 ===================== */
+.password-prompt {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    padding: 40px 20px;
+}
+.password-box {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--warning);
+    padding: 32px 40px;
+    text-align: center;
+    max-width: 360px;
+    width: 100%;
+}
+.password-box i {
+    font-size: 48px;
+    color: var(--warning);
+    margin-bottom: 16px;
+}
+.password-box h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+.password-box p {
+    color: var(--muted);
+    margin-bottom: 20px;
+}
+.password-box input {
+    width: 100%;
+    padding: 12px 16px;
+    margin: 12px 0;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-size: 15px;
+    background: var(--bg);
+    color: var(--text);
+}
+.password-box input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+.password-box .btn {
+    width: 100%;
+    margin-top: 8px;
+}
+
+/* ===================== 打赏页 ===================== */
 .qr-box {
     display: inline-flex;
     align-items: center;

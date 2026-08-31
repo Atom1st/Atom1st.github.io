@@ -4,4 +4,44 @@ import { site } from '../site';
 <header class="topbar">
   <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
   <span class="site-title">{site.title}</span>
+  <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+    <i class="fas fa-sun" id="themeIcon"></i>
+  </button>
 </header>
+
+<script is:inline>
+  const toggle = document.getElementById('themeToggle');
+  const icon = document.getElementById('themeIcon');
+  const html = document.documentElement;
+
+  function applyTheme(theme) {
+    html.setAttribute('data-theme', theme);
+    icon.className = theme === 'dark' ? 'fas fa-moon' : 'fas fa-sun';
+  }
+
+  // 初始化：从 localStorage 读取或跟随系统偏好
+  const saved = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initial = saved || (prefersDark ? 'dark' : 'light');
+  applyTheme(initial);
+
+  toggle?.addEventListener('click', () => {
+    const current = html.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('theme', next);
+    applyTheme(next);
+    
+    // 通知 Giscus 更新主题
+    const giscusFrame = document.querySelector('iframe.giscus-frame');
+    if (giscusFrame) {
+      giscusFrame.contentWindow.postMessage({ giscus: { setConfig: { theme: next === 'dark' ? 'dark' : 'light' } } }, 'https://giscus.app');
+    }
+  });
+
+  // 监听系统主题变化（仅在用户未手动设置时）
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    if (!localStorage.getItem('theme')) {
+      applyTheme(e.matches ? 'dark' : 'light');
+    }
+  });
+</script>

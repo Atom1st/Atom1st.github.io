@@ -2,6 +2,11 @@
 
 基于 **Astro** + **bun** 重建的个人站点，复刻原静态站 `AI-geek` 的视觉效果，并把「最新文章」改为按日期动态生成、「热门资源」改为由 Markdown 里的 `hot` 标记决定。
 
+新增功能：
+- ✅ **亮/暗模式切换**：右上角日月图标切换，跟随系统偏好，记忆用户选择
+- ✅ **文章密码保护**：受保护文章可设置 SHA-256 密码，客户端验证，同会话免重复输入
+- ✅ **评论区主题同步**：Giscus 评论区自动跟随站点亮/暗模式
+
 线上地址：<https://atom1st.github.io>
 
 ---
@@ -73,6 +78,9 @@ category: 教程            # 分类
 tags: [人工智能, 入门]     # 标签，可多个
 description: 一句话简介     # 卡片与列表里显示的摘要
 type: article             # article=文章；resource=资源；page=独立页(如关于)
+origin: original          # original=原创；repost=搬运（显示徽章）
+access: public            # public=公开；protected=受保护（需密码）
+password: ""              # 受保护时：SHA-256 密码哈希（见下文）
 ---
 正文用 Markdown 书写，支持：
 
@@ -85,6 +93,29 @@ type: article             # article=文章；resource=资源；page=独立页(�
 
 - 主页「最新文章」区块（按 `date` 倒序，取前若干篇）
 - 「文章」页 `/articles`
+
+### 3.1 文章加密（受保护内容）
+
+1. 在 frontmatter 设置 `access: protected`
+2. 生成密码哈希：
+   ```bash
+   node scripts/gen-password-hash.js "你的密码"
+   # 输出如：8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92
+   ```
+3. 将输出的哈希值填入 `password` 字段
+4. 用户访问时需输入密码，验证通过后才显示内容（验证状态保存在 sessionStorage，同一会话免重复输入）
+
+示例：
+```md
+---
+title: 秘密文档
+date: 2026-08-31
+category: 内部
+access: protected
+password: "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92"
+---
+这是加密内容……
+```
 
 ---
 
@@ -196,8 +227,20 @@ git push origin main
 | 发文章 | `src/content/posts/` 新建 `.md`（`type: article`） |
 | 发资源 | 同上，`type: resource` |
 | 进主页热门 | md 里加 `hot: true` |
+| 文章加密 | md 里加 `access: protected` + `password: "哈希值"` |
+| 生成密码哈希 | `node scripts/gen-password-hash.js "密码"` |
 | 改关于页 | `src/content/posts/about.md` |
 | 加友链 | `src/pages/friends.astro` |
 | 改标题/头像/菜单/联系方式 | `src/site.ts` |
 | 改外观配色 | `src/styles/global.css` 顶部 `:root` |
 | 加导航页 | 在 `src/pages/` 新建 `.astro` 并在 `site.ts` 的 `nav` 加链接 |
+
+---
+
+## 十一、亮/暗模式说明
+
+- 右上角顶栏显示 ☀️/🌙 图标，点击切换
+- 首次访问跟随系统偏好（`prefers-color-scheme`）
+- 用户手动切换后记忆到 `localStorage`，下次访问恢复选择
+- Giscus 评论区自动同步主题变化
+- CSS 变量在 `src/styles/global.css` 的 `:root`（亮色）和 `[data-theme="dark"]`（暗色）中定义

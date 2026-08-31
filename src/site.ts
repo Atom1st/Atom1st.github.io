@@ -15,7 +15,7 @@ export const site = {
   contact: [
     { icon: 'fa-envelope', label: '2044376627@qq.com', href: 'mailto:2044376627@qq.com' },
     { icon: 'fa-brands fa-github', label: 'Atom1st', href: 'https://github.com/Atom1st' },
-    { icon: 'fa-tv', label: 'Guiyihan', href: 'https://space.bilibili.com' },
+    { icon: 'fa-tv', label: 'Guiyihan', href: 'https://space.bilibili.com/3546721952991707' },
     { icon: 'fa-dragon', label: 'GuiyihanRT', href: 'https://www.luogu.com.cn' },
   ],
 };

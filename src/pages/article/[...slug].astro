@@ -16,6 +16,9 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 const { words, minutes } = readingInfo(entry.body);
+const isProtected = entry.data.access === 'protected';
+const passwordHash = entry.data.password || '';
+const storageKey = `article-unlocked-${entry.id}`;
 ---
 <BaseLayout title={entry.data.title}>
   <main class="content">
@@ -29,15 +32,78 @@ const { words, minutes } = readingInfo(entry.body);
       origin={entry.data.origin}
       access={entry.data.access}
     />
-    {entry.data.access === 'protected' && (
+    {isProtected && (
       <div class="notice protected">
         <i class="fas fa-lock"></i> 本文为受保护内容
       </div>
     )}
-    <article class="article-body">
+    {isProtected ? (
+      <div id="passwordPrompt" class="password-prompt">
+        <div class="password-box">
+          <i class="fas fa-lock"></i>
+          <h3>文章已加密</h3>
+          <p>请输入密码查看内容</p>
+          <input type="password" id="passwordInput" placeholder="请输入密码" autocomplete="current-password" />
+          <button class="btn" id="unlockBtn">解锁</button>
+          <p id="errorMsg" class="error" style="display:none; color: var(--warning); margin-top: 10px; font-size: 14px;">密码错误，请重试</p>
+        </div>
+      </div>
+    ) : (
+      <article class="article-body">
+        <Content />
+      </article>
+    )}
+    <div id="articleContent" class="article-body" style={isProtected ? 'display:none' : ''}>
       <Content />
-    </article>
+    </div>
     <hr />
     <Giscus />
   </main>
 </BaseLayout>
+
+<script is:inline>
+  if ({isProtected}) {
+    const prompt = document.getElementById('passwordPrompt');
+    const content = document.getElementById('articleContent');
+    const input = document.getElementById('passwordInput');
+    const btn = document.getElementById('unlockBtn');
+    const errorMsg = document.getElementById('errorMsg');
+    const expectedHash = {passwordHash};
+
+    // 检查是否已解锁
+    const unlocked = sessionStorage.getItem('{storageKey}');
+    if (unlocked === 'true') {
+      prompt.style.display = 'none';
+      content.style.display = 'block';
+    }
+
+    async function sha256(str) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(str);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function tryUnlock() {
+      const password = input.value;
+      if (!password) return;
+      const hash = await sha256(password);
+      if (hash === expectedHash) {
+        sessionStorage.setItem('{storageKey}', 'true');
+        prompt.style.display = 'none';
+        content.style.display = 'block';
+        errorMsg.style.display = 'none';
+      } else {
+        errorMsg.style.display = 'block';
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    btn?.addEventListener('click', tryUnlock);
+    input?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') tryUnlock();
+    });
+  }
+</script>

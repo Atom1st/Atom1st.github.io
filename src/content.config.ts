@@ -9,10 +9,11 @@ const posts = defineCollection({
     category: z.string(),
     tags: z.array(z.string()).default([]),
     description: z.string().optional(),
-    hot: z.boolean().default(false),            // 热门资源标记
+    hot: z.boolean().default(false),
     type: z.enum(['article', 'resource', 'page']).default('article'),
-    origin: z.enum(['original', 'repost']).default('original'),   // 原创 / 搬运
-    access: z.enum(['public', 'protected']).default('public'),   // 公共 / 受保护
+    origin: z.enum(['original', 'repost']).default('original'),
+    access: z.enum(['public', 'protected']).default('public'),
+    password: z.string().optional(),
   }),
 });
 
