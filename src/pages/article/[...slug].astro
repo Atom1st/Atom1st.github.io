@@ -38,7 +38,7 @@ const storageKey = `article-unlocked-${entry.id}`;
       </div>
     )}
     {isProtected ? (
-      <div id="passwordPrompt" class="password-prompt">
+      <div id="passwordPrompt" class="password-prompt" data-password-hash={passwordHash} data-storage-key={storageKey}>
         <div class="password-box">
           <i class="fas fa-lock"></i>
           <h3>文章已加密</h3>
@@ -62,16 +62,18 @@ const storageKey = `article-unlocked-${entry.id}`;
 </BaseLayout>
 
 <script is:inline>
-  if ({isProtected}) {
-    const prompt = document.getElementById('passwordPrompt');
-    const content = document.getElementById('articleContent');
-    const input = document.getElementById('passwordInput');
-    const btn = document.getElementById('unlockBtn');
-    const errorMsg = document.getElementById('errorMsg');
-    const expectedHash = {passwordHash};
+  const prompt = document.getElementById('passwordPrompt');
+  const content = document.getElementById('articleContent');
+  const input = document.getElementById('passwordInput');
+  const btn = document.getElementById('unlockBtn');
+  const errorMsg = document.getElementById('errorMsg');
+
+  if (prompt) {
+    const passwordHash = prompt.dataset.passwordHash;
+    const storageKey = prompt.dataset.storageKey;
 
     // 检查是否已解锁
-    const unlocked = sessionStorage.getItem('{storageKey}');
+    const unlocked = sessionStorage.getItem(storageKey);
     if (unlocked === 'true') {
       prompt.style.display = 'none';
       content.style.display = 'block';
@@ -89,8 +91,8 @@ const storageKey = `article-unlocked-${entry.id}`;
       const password = input.value;
       if (!password) return;
       const hash = await sha256(password);
-      if (hash === expectedHash) {
-        sessionStorage.setItem('{storageKey}', 'true');
+      if (hash === passwordHash) {
+        sessionStorage.setItem(storageKey, 'true');
         prompt.style.display = 'none';
         content.style.display = 'block';
         errorMsg.style.display = 'none';
