@@ -1,11 +1,10 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ArticleCard from '../components/ArticleCard.astro';
+import articlesData from '../data/articles.json';
 
-const articles = (await getCollection('posts'))
-  .filter((p) => p.data.type === 'article')
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const articles = (articlesData as any[])
+  .filter((p) => p.type === 'article')
+  .sort((a, b) => b.date.localeCompare(a.date));
 ---
 <BaseLayout title="文章">
   <main class="content">
@@ -13,7 +12,19 @@ const articles = (await getCollection('posts'))
     <p class="page-sub">全部技术文章，按发布时间倒序排列</p>
 
     <div class="card-group">
-      {articles.map((e) => <ArticleCard entry={e} />)}
+      {articles.map((e) => (
+        <a class="card" href={`/article/${e.id}`}>
+          <div class="badges">
+            <span class={`badge ${e.origin}`}>{e.origin === 'original' ? '原创' : '搬运'}</span>
+            <span class={`badge ${e.access}`}>{e.access === 'public' ? '公共' : '受保护'}</span>
+          </div>
+          <h3>{e.title}</h3>
+          {e.description && <p>{e.description}</p>}
+          <div class="meta">
+            <i class="far fa-calendar"></i> {e.date} · <i class="fas fa-folder"></i> {e.category}
+          </div>
+        </a>
+      ))}
     </div>
   </main>
 </BaseLayout>

@@ -477,6 +477,50 @@ input:focus, textarea:focus, select:focus {
     margin-top: 8px;
 }
 
+/* 解密后内容容器 */
+#decryptedContent {
+    line-height: 1.8;
+}
+#decryptedContent h1 { font-size: 26px; margin: 26px 0 14px; font-weight: 800; }
+#decryptedContent h2 { font-size: 21px; margin: 24px 0 12px; font-weight: 800; border-bottom: 2px solid var(--border); padding-bottom: 6px; }
+#decryptedContent h3 { font-size: 18px; margin: 20px 0 10px; font-weight: 700; }
+#decryptedContent p { margin: 12px 0; }
+#decryptedContent ul, #decryptedContent ol { margin: 12px 0 12px 24px; }
+#decryptedContent li { margin: 6px 0; }
+#decryptedContent code {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 14px;
+}
+#decryptedContent pre {
+    background: #0D1117;
+    color: #E6EDF3;
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 16px 0;
+    border-left: 4px solid var(--accent);
+}
+#decryptedContent pre code { background: transparent; border: none; color: inherit; padding: 0; }
+#decryptedContent blockquote {
+    border-left: 4px solid var(--accent);
+    background: var(--code-bg);
+    margin: 16px 0;
+    padding: 12px 18px;
+    color: var(--muted);
+}
+#decryptedContent hr { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+#decryptedContent table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 15px;
+    background: var(--paper);
+}
+#decryptedContent th, #decryptedContent td { border: 1px solid var(--border); padding: 10px 12px; text-align: left; }
+#decryptedContent th { background: var(--code-bg); font-weight: 700; }
+
 /* ===================== 打赏页 ===================== */
 .qr-box {
     display: inline-flex;

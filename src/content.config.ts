@@ -13,7 +13,7 @@ const posts = defineCollection({
     type: z.enum(['article', 'resource', 'page']).default('article'),
     origin: z.enum(['original', 'repost']).default('original'),
     access: z.enum(['public', 'protected']).default('public'),
-    password: z.string().optional(),
+    password: z.string().nullish(),
   }),
 });
 

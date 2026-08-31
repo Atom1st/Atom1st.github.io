@@ -2,3 +2,15 @@ node_modules
 dist
 .astro
 *.log
+
+# 受保护文章源文件（构建时加密，不提交明文）
+src/content/posts/protected-demo.md
+src/content/posts/zzfun.md
+
+# 受保护文章源文件（构建时加密，不提交明文）
+src/content/posts/protected-demo.md
+src/content/posts/zzfun.md
+
+# 受保护文章源文件（构建时加密，不提交明文）
+src/content/posts/protected-demo.md
+src/content/posts/zzfun.md

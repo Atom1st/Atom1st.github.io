@@ -4,41 +4,93 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import ArticleMeta from '../../components/ArticleMeta.astro';
 import Giscus from '../../components/Giscus.astro';
 import { readingInfo } from '../../lib/reading';
+import articlesData from '../../data/articles.json';
 
 export async function getStaticPaths() {
+  const allMeta: any[] = articlesData;
+
+  // 从内容集合获取非受保护文章
   const posts = await getCollection('posts', ({ data }) => data.type !== 'page');
-  return posts.map((entry) => ({
-    params: { slug: entry.id },
-    props: { entry },
-  }));
+  const contentPaths = posts
+    .filter((entry) => entry.data.access !== 'protected')
+    .map((entry) => ({
+      params: { slug: entry.id },
+      props: { entry, isEncrypted: false },
+    }));
+
+  // 从 articles.json 获取受保护文章（需要有密码哈希）
+  const encryptedPaths = allMeta
+    .filter((m) => m.type !== 'page' && m.access === 'protected' && m.passwordHash)
+    .map((m) => ({
+      params: { slug: m.id },
+      props: {
+        meta: m,
+        isEncrypted: true,
+      },
+    }));
+
+  return [...contentPaths, ...encryptedPaths];
 }
 
-const { entry } = Astro.props;
-const { Content } = await render(entry);
-const { words, minutes } = readingInfo(entry.body);
-const isProtected = entry.data.access === 'protected';
-const passwordHash = entry.data.password || '';
-const storageKey = `article-unlocked-${entry.id}`;
+// 区分加密文章和普通文章
+const isEncrypted = Astro.props.isEncrypted;
+
+let articleMeta: any;
+let Content: any;
+let words = 0;
+let minutes = 0;
+
+if (isEncrypted) {
+  // 加密文章：使用 articles.json 中的元数据
+  articleMeta = Astro.props.meta;
+} else {
+  // 普通文章：使用内容集合
+  const entry = Astro.props.entry;
+  articleMeta = {
+    id: entry.id,
+    title: entry.data.title,
+    date: entry.data.date.toISOString().slice(0, 10),
+    category: entry.data.category,
+    tags: entry.data.tags,
+    origin: entry.data.origin,
+    access: entry.data.access,
+    passwordHash: entry.data.password || '',
+  };
+  const rendered = await render(entry);
+  Content = rendered.Content;
+  const info = readingInfo(entry.body);
+  words = info.words;
+  minutes = info.minutes;
+}
+
+const isProtected = articleMeta.access === 'protected';
+const passwordHash = articleMeta.passwordHash || '';
+const storageKey = `article-unlocked-${articleMeta.id}`;
+const encFileUrl = `/encrypted/${articleMeta.id}.json`;
 ---
-<BaseLayout title={entry.data.title}>
+<BaseLayout title={articleMeta.title}>
   <main class="content">
-    <h1 class="page-title">{entry.data.title}</h1>
+    <h1 class="page-title">{articleMeta.title}</h1>
     <ArticleMeta
-      date={entry.data.date}
-      category={entry.data.category}
+      date={new Date(articleMeta.date)}
+      category={articleMeta.category}
       words={words}
       minutes={minutes}
-      tags={entry.data.tags}
-      origin={entry.data.origin}
-      access={entry.data.access}
+      tags={articleMeta.tags}
+      origin={articleMeta.origin}
+      access={articleMeta.access}
     />
     {isProtected && (
       <div class="notice protected">
         <i class="fas fa-lock"></i> 本文为受保护内容
       </div>
     )}
+
     {isProtected ? (
-      <div id="passwordPrompt" class="password-prompt" data-password-hash={passwordHash} data-storage-key={storageKey}>
+      <div id="passwordPrompt" class="password-prompt"
+        data-password-hash={passwordHash}
+        data-storage-key={storageKey}
+        data-enc-file={encFileUrl}>
         <div class="password-box">
           <i class="fas fa-lock"></i>
           <h3>文章已加密</h3>
@@ -53,59 +105,109 @@ const storageKey = `article-unlocked-${entry.id}`;
         <Content />
       </article>
     )}
-    <div id="articleContent" class="article-body" style={isProtected ? 'display:none' : ''}>
-      <Content />
-    </div>
+
+    {isProtected && (
+      <div id="decryptedContent" class="article-body" style="display:none"></div>
+    )}
+
     <hr />
     <Giscus />
   </main>
+
+  {isProtected && (
+    <script is:inline src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script is:inline>
+      (function() {
+        const prompt = document.getElementById('passwordPrompt');
+        const contentEl = document.getElementById('decryptedContent');
+        const input = document.getElementById('passwordInput');
+        const btn = document.getElementById('unlockBtn');
+        const errorMsg = document.getElementById('errorMsg');
+
+        if (!prompt || !contentEl) return;
+
+        const expectedHash = prompt.dataset.passwordHash;
+        const storageKey = prompt.dataset.storageKey;
+        const encFileUrl = prompt.dataset.encFile;
+
+        // 检查是否已解锁
+        const unlocked = sessionStorage.getItem(storageKey);
+        if (unlocked === 'true') {
+          loadAndDecrypt();
+        }
+
+        async function sha256(str) {
+          const data = new TextEncoder().encode(str);
+          const hash = await crypto.subtle.digest('SHA-256', data);
+          return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function deriveKey(password, saltB64, iterations) {
+          const enc = new TextEncoder();
+          const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+          const salt = Uint8Array.from(atob(saltB64), c => c.charCodeAt(0));
+          return crypto.subtle.deriveKey(
+            { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['decrypt']
+          );
+        }
+
+        async function decrypt(salt, iv, ct, password) {
+          const key = await deriveKey(password, salt, 100000);
+          const encryptedBytes = Uint8Array.from(atob(ct), c => c.charCodeAt(0));
+          const ivBytes = Uint8Array.from(atob(iv), c => c.charCodeAt(0));
+          const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: ivBytes }, key, encryptedBytes);
+          return new TextDecoder().decode(decrypted);
+        }
+
+        async function loadAndDecrypt(password) {
+          try {
+            // 如果有密码，先验证
+            if (password && expectedHash) {
+              const hash = await sha256(password);
+              if (hash !== expectedHash) {
+                errorMsg.style.display = 'block';
+                input.value = '';
+                input.focus();
+                return;
+              }
+            }
+
+            errorMsg.style.display = 'none';
+
+            // 获取加密数据
+            const res = await fetch(encFileUrl);
+            const encData = await res.json();
+
+            // 解密
+            const plaintext = await decrypt(encData.salt, encData.iv, encData.ct, password);
+
+            // 渲染 markdown
+            const html = marked.parse(plaintext);
+            contentEl.innerHTML = html;
+
+            // 显示内容
+            prompt.style.display = 'none';
+            contentEl.style.display = 'block';
+
+            // 记录解锁状态
+            sessionStorage.setItem(storageKey, 'true');
+          } catch (e) {
+            console.error('解密失败:', e);
+            errorMsg.style.display = 'block';
+            input.value = '';
+            input.focus();
+          }
+        }
+
+        btn?.addEventListener('click', () => loadAndDecrypt(input.value));
+        input?.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') loadAndDecrypt(input.value);
+        });
+      })();
+    </script>
+  )}
 </BaseLayout>
-
-<script is:inline>
-  const prompt = document.getElementById('passwordPrompt');
-  const content = document.getElementById('articleContent');
-  const input = document.getElementById('passwordInput');
-  const btn = document.getElementById('unlockBtn');
-  const errorMsg = document.getElementById('errorMsg');
-
-  if (prompt) {
-    const passwordHash = prompt.dataset.passwordHash;
-    const storageKey = prompt.dataset.storageKey;
-
-    // 检查是否已解锁
-    const unlocked = sessionStorage.getItem(storageKey);
-    if (unlocked === 'true') {
-      prompt.style.display = 'none';
-      content.style.display = 'block';
-    }
-
-    async function sha256(str) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(str);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    async function tryUnlock() {
-      const password = input.value;
-      if (!password) return;
-      const hash = await sha256(password);
-      if (hash === passwordHash) {
-        sessionStorage.setItem(storageKey, 'true');
-        prompt.style.display = 'none';
-        content.style.display = 'block';
-        errorMsg.style.display = 'none';
-      } else {
-        errorMsg.style.display = 'block';
-        input.value = '';
-        input.focus();
-      }
-    }
-
-    btn?.addEventListener('click', tryUnlock);
-    input?.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') tryUnlock();
-    });
-  }
-</script>

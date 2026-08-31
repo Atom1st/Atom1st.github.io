@@ -1,0 +1,125 @@
+[
+  {
+    "id": "protected-demo",
+    "title": "受保护文章示例",
+    "date": "2026-08-31",
+    "category": "测试",
+    "tags": [
+      "受保护",
+      "示例"
+    ],
+    "description": "这是一篇受密码保护的文章示例",
+    "type": "article",
+    "origin": "original",
+    "access": "protected",
+    "passwordHash": "49dc52e6bf2abe5ef6e2bb5b0f1ee2d765b922ae6cc8b95d39dc06c21c848f8c"
+  },
+  {
+    "id": "zzfun",
+    "title": "政治笑话",
+    "date": "2026-08-31",
+    "category": "记录",
+    "tags": [
+      "键政，长时间更新"
+    ],
+    "description": "政治笑话，基于生活，持续更新",
+    "type": "article",
+    "origin": "original",
+    "access": "protected",
+    "passwordHash": ""
+  },
+  {
+    "id": "bayi",
+    "title": "批判所谓“以军正义”之言论",
+    "date": "2026-08-29",
+    "category": "议论",
+    "tags": [
+      "键政，国际局势"
+    ],
+    "description": "批判所谓支持以军暴行之观点",
+    "type": "article",
+    "origin": "original",
+    "access": "public",
+    "passwordHash": ""
+  },
+  {
+    "id": "camp-travel-note",
+    "title": "2026 丘成桐夏令营游记",
+    "date": "2026-08-28",
+    "category": "游记",
+    "tags": [
+      "夏令营",
+      "游记"
+    ],
+    "description": "丘成桐青少年数学与人工智能夏令营游记",
+    "type": "article",
+    "origin": "original",
+    "access": "public",
+    "passwordHash": ""
+  },
+  {
+    "id": "about",
+    "title": "@Guiyihan 的博客",
+    "date": "2026-08-27",
+    "category": "关于",
+    "tags": [
+      "关于",
+      "站长"
+    ],
+    "description": "",
+    "type": "page",
+    "origin": "original",
+    "access": "public",
+    "passwordHash": ""
+  },
+  {
+    "id": "ai-intro",
+    "title": "人工智能入门指北",
+    "date": "2026-08-27",
+    "category": "教程",
+    "tags": [
+      "人工智能",
+      "入门",
+      "机器学习"
+    ],
+    "description": "从零开始理解机器学习与深度学习的基本脉络。",
+    "type": "article",
+    "origin": "original",
+    "access": "public",
+    "passwordHash": ""
+  },
+  {
+    "id": "math-ai",
+    "title": "数学视角下的 AI",
+    "date": "2026-08-26",
+    "category": "数学",
+    "tags": [
+      "数学",
+      "贝叶斯",
+      "Softmax",
+      "推导"
+    ],
+    "description": "用贝叶斯分类器与 Softmax 看清模型背后的公式。",
+    "type": "article",
+    "origin": "original",
+    "access": "public",
+    "passwordHash": ""
+  },
+  {
+    "id": "camp-resource",
+    "title": "2026 丘成桐青少年数学与人工智能夏令营课件",
+    "date": "2026-08-20",
+    "category": "资源",
+    "tags": [
+      "夏令营",
+      "PDF",
+      "课件",
+      "下载"
+    ],
+    "description": "大学数学与人工智能讲义，含 PDF、实战与数学基础。",
+    "type": "resource",
+    "origin": "original",
+    "access": "public",
+    "passwordHash": ""
+  }
+]

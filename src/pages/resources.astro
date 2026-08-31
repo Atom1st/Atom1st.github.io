@@ -1,11 +1,10 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import articlesData from '../data/articles.json';
 
-const resources = (await getCollection('posts'))
-  .filter((p) => p.data.type === 'resource' || p.data.hot)
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
-const fmt = (d: Date) => d.toISOString().slice(0, 10);
+const resources = (articlesData as any[])
+  .filter((p) => p.type === 'resource' || p.hot)
+  .sort((a, b) => b.date.localeCompare(a.date));
 ---
 <BaseLayout title="资源">
   <main class="content">
@@ -16,9 +15,9 @@ const fmt = (d: Date) => d.toISOString().slice(0, 10);
       {resources.map((e) => (
         <li>
           <div class="info">
-            <div class="t">{e.data.title}</div>
-            {e.data.description && <div class="d">{e.data.description}</div>}
-            <div class="d"><i class="far fa-calendar"></i> {fmt(e.data.date)} · <i class="fas fa-folder"></i> {e.data.category}</div>
+            <div class="t">{e.title}</div>
+            {e.description && <div class="d">{e.description}</div>}
+            <div class="d"><i class="far fa-calendar"></i> {e.date} · <i class="fas fa-folder"></i> {e.category}</div>
           </div>
           <a class="btn" href={`/article/${e.id}`}>查看</a>
         </li>
