@@ -1,0 +1,24 @@
+ Volume in drive D has no label.
+ Volume Serial Number is 7085-713B
+
+ Directory of D:\code\Page\AI-new
+
+2026/09/03 周四  19:56    <DIR>          .
+2026/08/27 周四  22:25    <DIR>          ..
+2026/08/28 周五  21:11    <DIR>          .astro
+2026/08/28 周五  17:58    <DIR>          .github
+2026/08/31 周一  12:25               134 .gitignore
+2026/08/28 周五  17:58               311 astro.config.mjs
+2026/08/27 周四  22:30            94,242 bun.lock
+2026/08/31 周一  12:51    <DIR>          dist
+2026/08/31 周一  11:07    <DIR>          node_modules
+2026/08/31 周一  11:07           156,698 package-lock.json
+2026/08/31 周一  12:19               449 package.json
+2026/09/03 周四  19:56                 0 path.txt
+2026/08/31 周一  11:09    <DIR>          public
+2026/08/31 周一  12:49            13,299 README.md
+2026/08/31 周一  11:06    <DIR>          scripts
+2026/08/31 周一  11:09    <DIR>          src
+2026/08/27 周四  22:25                42 tsconfig.json
+               8 File(s)        265,175 bytes
+               9 Dir(s)  160,503,136,256 bytes free

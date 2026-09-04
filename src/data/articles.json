@@ -1,5 +1,20 @@
 [
   {
+    "id": ".md",
+    "title": "金中",
+    "date": "2026-09-03",
+    "category": "未分类",
+    "tags": [
+      ""
+    ],
+    "description": "金中相关资料",
+    "type": "resource",
+    "origin": "original",
+    "access": "protected",
+    "passwordHash": "67155f5d295b925ec42dc4cd028286a8615744be6a6cbe8f1079f759efab12df",
+    "hot": true
+  },
+  {
     "id": "protected-demo",
     "title": "受保护文章示例",
     "date": "2026-08-31",
