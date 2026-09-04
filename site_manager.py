@@ -68,12 +68,16 @@ def parse_frontmatter(text):
     return meta, m.group(2)
 
 
-def build_frontmatter(meta):
-    """将 meta dict 转回 frontmatter 字符串"""
+def build_frontmatter(meta, include_password=False):
+    """将 meta dict 转回 frontmatter 字符串。
+
+    include_password=True 时会把 meta 中的明文 password 写入 frontmatter
+    （供创建/编辑受保护文章时保存密码）；默认 False 时跳过，避免密码被带回 UI 列表。
+    """
     lines = ['---']
     for k, v in meta.items():
-        if k == 'password':
-            continue  # 密码不写入 frontmatter 显示
+        if k == 'password' and not include_password:
+            continue  # 不写入 frontmatter，避免密码出现在界面
         if isinstance(v, list):
             lines.append(f'{k}: [{", ".join(v)}]')
         elif isinstance(v, bool):
@@ -293,7 +297,7 @@ class ArticlesPanel(ScrollPanel):
         meta = art['meta']
         container = wx.Panel(self)
         container.SetBackgroundColour(COLOR_PAPER)
-        container.SetMinSize((-1, 70))
+        container.SetMinSize((-1, 112))
 
         sizer = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -505,18 +509,19 @@ class ArticleCreateDialog(wx.Dialog):
             'hot': self.hot_cb.GetValue(),
         }
 
-        content = build_frontmatter(meta) + '\n' + self.body_tc.GetValue() + '\n'
-
         if meta['access'] == 'protected':
             pwd = self.pwd_input.GetValue().strip()
             if not pwd:
                 wx.MessageBox("受保护文章必须设置密码！", "错误", wx.OK | wx.ICON_ERROR)
                 return
-            content = build_frontmatter(meta | {'password': pwd}) + '\n' + self.body_tc.GetValue() + '\n'
+            meta['password'] = pwd
+
+        content = build_frontmatter(meta, include_password=True) + '\n' + self.body_tc.GetValue() + '\n'
 
         POSTS_DIR.mkdir(parents=True, exist_ok=True)
         f.write_text(content, encoding='utf-8')
-        wx.MessageBox(f"文章已创建: {slug}.md", "完成", wx.OK | wx.ICON_INFORMATION)
+        hint = "\n\n该文章受保护，请到「🔒 加密管理」运行 bun run encrypt 后提交推送。"
+        wx.MessageBox(f"文章已创建: {slug}.md{hint if meta['access'] == 'protected' else ''}", "完成", wx.OK | wx.ICON_INFORMATION)
         self.EndModal(wx.ID_OK)
 
 
@@ -582,6 +587,13 @@ class ArticleEditDialog(wx.Dialog):
         row3.Add(self.access_rb, 0)
         sizer.Add(row3, 0, wx.LEFT | wx.BOTTOM, 12)
 
+        sizer.Add(make_text(panel, "密码 (仅受保护文章)", (10, True)), 0, wx.LEFT | wx.TOP, 12)
+        self.pwd_input = make_input(panel, str(meta.get('password', '')))
+        self.pwd_input.SetFont(_ui_font(11, mono=True))
+        sizer.Add(self.pwd_input, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 12)
+        self.pwd_input.Enable(meta.get('access', 'public') == 'protected')
+        self.access_rb.Bind(wx.EVT_RADIOBOX, self._on_access_change)
+
         self.hot_cb = wx.CheckBox(panel, label="热门资源 (hot: true)")
         self.hot_cb.SetValue(meta.get('hot', False))
         self.hot_cb.SetFont(_ui_font(11))
@@ -613,6 +625,10 @@ class ArticleEditDialog(wx.Dialog):
         self.SetSizer(outer)
         self.scroll.FitInside()
 
+    def _on_access_change(self, e):
+        self.pwd_input.Enable(self.access_rb.GetStringSelection() == 'protected')
+        e.Skip()
+
     def _on_save(self, e):
         tags_raw = self.inputs["标签 (逗号分隔)"].GetValue().strip()
         tags = [t.strip() for t in tags_raw.split(',') if t.strip()] if tags_raw else []
@@ -629,9 +645,17 @@ class ArticleEditDialog(wx.Dialog):
             'hot': self.hot_cb.GetValue(),
         }
 
-        content = build_frontmatter(meta) + '\n' + self.body_tc.GetValue() + '\n'
+        if meta['access'] == 'protected':
+            pwd = self.pwd_input.GetValue().strip()
+            if not pwd:
+                wx.MessageBox("受保护文章必须设置密码！", "错误", wx.OK | wx.ICON_ERROR)
+                return
+            meta['password'] = pwd
+
+        content = build_frontmatter(meta, include_password=True) + '\n' + self.body_tc.GetValue() + '\n'
         self.filepath.write_text(content, encoding='utf-8')
-        wx.MessageBox(f"已保存: {self.filepath.name}", "完成", wx.OK | wx.ICON_INFORMATION)
+        hint = "\n\n若修改了密码或正文，请到「🔒 加密管理」运行 bun run encrypt 后提交推送。"
+        wx.MessageBox(f"已保存: {self.filepath.name}{hint if meta['access'] == 'protected' else ''}", "完成", wx.OK | wx.ICON_INFORMATION)
         self.EndModal(wx.ID_OK)
 
 
@@ -707,6 +731,11 @@ class ResourcesPanel(ScrollPanel):
             hot_btn.SetMinSize((80, 28))
             hot_btn.Bind(wx.EVT_BUTTON, lambda e, s=art['slug'], h=not meta.get('hot'): self._toggle_hot(s, h))
             btn_s.Add(hot_btn, 0)
+
+            del_btn = make_button(card, "删除", COLOR_DANGER)
+            del_btn.SetMinSize((60, 28))
+            del_btn.Bind(wx.EVT_BUTTON, lambda e, s=art['slug']: self._on_delete(s))
+            btn_s.Add(del_btn, 0, wx.TOP | wx.LEFT | wx.RIGHT | wx.BOTTOM, 4)
             sizer.Add(btn_s, 0, wx.ALL, 6)
 
             card.SetSizer(sizer)
@@ -750,6 +779,21 @@ class ResourcesPanel(ScrollPanel):
         state = "已设为热门" if hot_val else "已取消热门"
         wx.MessageBox(f"{slug}: {state}", "完成", wx.OK | wx.ICON_INFORMATION)
         self._rebuild()
+
+    def _on_delete(self, slug):
+        f = POSTS_DIR / f"{slug}.md"
+        if not f.exists():
+            wx.MessageBox(f"文件不存在: {f}", "错误", wx.OK | wx.ICON_ERROR)
+            return
+        r = wx.MessageBox(f"确定要删除资源 {slug}.md 吗？\n\n此操作不可恢复。", "确认删除",
+                          wx.YES_NO | wx.ICON_WARNING)
+        if r == wx.YES:
+            f.unlink()
+            enc_f = ENCRYPTED_DIR / f"{slug}.json"
+            if enc_f.exists():
+                enc_f.unlink()
+            self._rebuild()
+            wx.MessageBox(f"已删除 {slug}.md", "完成", wx.OK | wx.ICON_INFORMATION)
 
 
 # ═══════════════════════════════════════════════════════════

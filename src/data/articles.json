@@ -1,20 +1,5 @@
 [
   {
-    "id": ".md",
-    "title": "金中",
-    "date": "2026-09-03",
-    "category": "未分类",
-    "tags": [
-      ""
-    ],
-    "description": "金中相关资料",
-    "type": "resource",
-    "origin": "original",
-    "access": "protected",
-    "passwordHash": "67155f5d295b925ec42dc4cd028286a8615744be6a6cbe8f1079f759efab12df",
-    "hot": true
-  },
-  {
     "id": "protected-demo",
     "title": "受保护文章示例",
     "date": "2026-08-31",
@@ -27,7 +12,7 @@
     "type": "article",
     "origin": "original",
     "access": "protected",
-    "passwordHash": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+    "passwordHash": "384fde3636e6e01e0194d2976d8f26410af3e846e573379cb1a09e2f0752d8cc",
     "hot": false
   },
   {
@@ -72,41 +57,6 @@
     ],
     "description": "",
     "type": "page",
-    "origin": "original",
-    "access": "public",
-    "passwordHash": "",
-    "hot": false
-  },
-  {
-    "id": "ai-intro",
-    "title": "人工智能入门指北",
-    "date": "2026-08-27",
-    "category": "教程",
-    "tags": [
-      "人工智能",
-      "入门",
-      "机器学习"
-    ],
-    "description": "从零开始理解机器学习与深度学习的基本脉络。",
-    "type": "article",
-    "origin": "original",
-    "access": "public",
-    "passwordHash": "",
-    "hot": false
-  },
-  {
-    "id": "math-ai",
-    "title": "数学视角下的 AI",
-    "date": "2026-08-26",
-    "category": "数学",
-    "tags": [
-      "数学",
-      "贝叶斯",
-      "Softmax",
-      "推导"
-    ],
-    "description": "用贝叶斯分类器与 Softmax 看清模型背后的公式。",
-    "type": "article",
     "origin": "original",
     "access": "public",
     "passwordHash": "",

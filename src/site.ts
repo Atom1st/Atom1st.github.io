@@ -1,7 +1,7 @@
 export const site = {
-  title: '人工智能极客之家',
+  title: 'Guiyihan的博客',
   name: 'Guiyihan',
-  bio: '人工智能极客之家',
+  bio: '探求人工智能的至真至美',
   avatar: '/my.jpg',
   nav: [
     { href: '/', label: '主页', icon: 'fa-house' },
@@ -11,6 +11,7 @@ export const site = {
     { href: '/about', label: '关于', icon: 'fa-user' },
     { href: '/guestbook', label: '留言板', icon: 'fa-comments' },
     { href: '/reward', label: '打赏', icon: 'fa-heart' },
+    { href: '/', label: '', icon: 'fa-house' },
   ],
   contact: [
     { icon: 'fa-envelope', label: '2044376627@qq.com', href: 'mailto:2044376627@qq.com' },
