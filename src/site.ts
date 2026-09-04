@@ -11,7 +11,6 @@ export const site = {
     { href: '/about', label: '关于', icon: 'fa-user' },
     { href: '/guestbook', label: '留言板', icon: 'fa-comments' },
     { href: '/reward', label: '打赏', icon: 'fa-heart' },
-    { href: '/', label: '', icon: 'fa-house' },
   ],
   contact: [
     { icon: 'fa-envelope', label: '2044376627@qq.com', href: 'mailto:2044376627@qq.com' },

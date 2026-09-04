@@ -101,6 +101,7 @@ a:hover { color: var(--accent); text-decoration: underline; }
     background: var(--accent-dark);
 }
 .menu-toggle {
+    display: none;
     width: 40px;
     height: 40px;
     border: none;

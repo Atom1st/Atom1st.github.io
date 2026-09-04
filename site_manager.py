@@ -68,6 +68,26 @@ def parse_frontmatter(text):
     return meta, m.group(2)
 
 
+def _yaml_quote_if_needed(s):
+    """若字符串会被 YAML 误解析为非字符串（数字/布尔/空/特殊开头等），则加引号。
+    避免 numeric 密码如 password: 114514 被当作数字，破坏 Astro 的 string schema。"""
+    if s == '':
+        return '""'
+    low = s.strip().lower()
+    if low in ('true', 'false', 'null', '~', 'yes', 'no', 'on', 'off'):
+        return f'"{s}"'
+    try:
+        float(s)
+        return f'"{s}"'
+    except ValueError:
+        pass
+    if s[0] in '#-?:,[]{}&*!|>\'"%@`':
+        return f'"{s.replace(chr(34), chr(92) + chr(34))}"'
+    if ': ' in s:
+        return f'"{s.replace(chr(34), chr(92) + chr(34))}"'
+    return s
+
+
 def build_frontmatter(meta, include_password=False):
     """将 meta dict 转回 frontmatter 字符串。
 
@@ -83,7 +103,7 @@ def build_frontmatter(meta, include_password=False):
         elif isinstance(v, bool):
             lines.append(f'{k}: {"true" if v else "false"}')
         else:
-            lines.append(f'{k}: {v}')
+            lines.append(f'{k}: {_yaml_quote_if_needed(str(v))}')
     lines.append('---')
     return '\n'.join(lines)
 
