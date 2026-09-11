@@ -16,9 +16,15 @@ const categories = [
   '闲话',
 ];
 
-// Get category from query parameter
-const url = new URL(Astro.url);
-const selectedCategory = url.searchParams.get('category') || undefined;
+// Get category from localStorage (persisted across page loads in same session)
+// localStorage is only available on client, so use fallback to first category
+let selectedCategory = categories[0];
+if (typeof window !== 'undefined') {
+  const storedCategory = localStorage.getItem('articleCategory');
+  if (storedCategory) {
+    selectedCategory = storedCategory;
+  }
+}
 ---
 <BaseLayout title="文章">
   <main class="content">
@@ -26,9 +32,15 @@ const selectedCategory = url.searchParams.get('category') || undefined;
     <p class="page-sub">全部技术文章，按发布时间倒序排列</p>
 
     <div class="category-filters">
-      <a class={!selectedCategory ? 'active' : ''} href="/articles">全部</a>
       {categories.map((cat) => (
-        <a class={selectedCategory && selectedCategory === cat ? 'active' : ''} href={`/articles?category=${cat}`}>
+        <a 
+          class={selectedCategory === cat ? 'active' : ''} 
+          onClick={(e: any) => {
+            e.preventDefault();
+            localStorage.setItem('articleCategory', cat);
+            window.location.href = '/articles';
+          }}
+        >
           {cat}
         </a>
       ))}
@@ -40,7 +52,7 @@ const selectedCategory = url.searchParams.get('category') || undefined;
 
     <div class="card-group">
       {articles
-        .filter((e) => !selectedCategory || e.category === selectedCategory)
+        .filter((e) => e.category === selectedCategory)
         .map((e) => (
           <a class="card" href={`/articles/${e.id}`}>
             <div class="badges">
@@ -53,7 +65,4 @@ const selectedCategory = url.searchParams.get('category') || undefined;
               <i class="far fa-calendar"></i> {e.date} · <i class="fas fa-folder"></i> {e.category}
             </div>
           </a>
-        ))}
-    </div>
-  </main>
-</BaseLayout>
+        ))
