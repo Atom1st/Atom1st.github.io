@@ -1,7 +1,7 @@
 ---
 title: '@Guiyihan 的博客'
 date: 2026-08-27
-category: 关于
+category: 个人记录
 tags: [关于, 站长]
 type: page
 ---

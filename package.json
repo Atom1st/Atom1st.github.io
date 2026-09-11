@@ -11,10 +11,12 @@
     "encrypt": "tsx scripts/encrypt-content.ts"
   },
   "dependencies": {
+    "@astrojs/check": "^0.9.10",
     "astro": "^5.0.0",
     "katex": "^0.16.0",
     "rehype-katex": "^7.0.0",
-    "remark-math": "^6.0.0"
+    "remark-math": "^6.0.0",
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
     "tsx": "^4.23.13"

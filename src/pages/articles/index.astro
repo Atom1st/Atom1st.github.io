@@ -5,26 +5,55 @@ import articlesData from '../../data/articles.json';
 const articles = (articlesData as any[])
   .filter((p) => p.type === 'article')
   .sort((a, b) => b.date.localeCompare(a.date));
+
+const categories = [
+  '个人记录',
+  '科技工程',
+  '算法理论',
+  '生活游记',
+  '学习文化课',
+  '休闲娱乐',
+  '闲话',
+];
+
+// Get category from query parameter
+const url = new URL(Astro.url);
+const selectedCategory = url.searchParams.get('category') || undefined;
 ---
 <BaseLayout title="文章">
   <main class="content">
     <h1 class="page-title">文章</h1>
     <p class="page-sub">全部技术文章，按发布时间倒序排列</p>
 
-    <div class="card-group">
-      {articles.map((e) => (
-        <a class="card" href={`/articles/${e.id}`}>
-          <div class="badges">
-            <span class={`badge ${e.origin}`}>{e.origin === 'original' ? '原创' : '搬运'}</span>
-            <span class={`badge ${e.access}`}>{e.access === 'public' ? '公共' : '受保护'}</span>
-          </div>
-          <h3>{e.title}</h3>
-          {e.description && <p>{e.description}</p>}
-          <div class="meta">
-            <i class="far fa-calendar"></i> {e.date} · <i class="fas fa-folder"></i> {e.category}
-          </div>
+    <div class="category-filters">
+      <a class={!selectedCategory ? 'active' : ''} href="/articles">全部</a>
+      {categories.map((cat) => (
+        <a class={selectedCategory === cat ? 'active' : ''} href="?category=${cat}">
+          {cat}
         </a>
       ))}
+    </div>
+
+    <p class="page-sub" style="margin-top: 12px; color: var(--muted);">
+      {selectedCategory ? `显示类别: ${selectedCategory}` : '显示全部'}
+    </p>
+
+    <div class="card-group">
+      {articles
+        .filter((e) => !selectedCategory || e.category === selectedCategory)
+        .map((e) => (
+          <a class="card" href={`/articles/${e.id}`}>
+            <div class="badges">
+              <span class={`badge ${e.origin}`}>{e.origin === 'original' ? '原创' : '搬运'}</span>
+              <span class={`badge ${e.access}`}>{e.access === 'public' ? '公共' : '受保护'}</span>
+            </div>
+            <h3>{e.title}</h3>
+            {e.description && <p>{e.description}</p>}
+            <div class="meta">
+              <i class="far fa-calendar"></i> {e.date} · <i class="fas fa-folder"></i> {e.category}
+            </div>
+          </a>
+        ))}
     </div>
   </main>
 </BaseLayout>

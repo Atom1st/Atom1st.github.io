@@ -1,7 +1,7 @@
 ---
 title: 批判所谓“以军正义”之言论
 date: 2026-08-29
-category: 议论
+category: 闲话
 tags: [键政，国际局势]
 description: 批判所谓支持以军暴行之观点
 type: article

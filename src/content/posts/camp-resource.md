@@ -1,7 +1,7 @@
 ---
 title: 2026 丘成桐青少年数学与人工智能夏令营课件
 date: 2026-08-20
-category: 资源
+category: 科技工程
 tags: [夏令营, PDF, 课件, 下载]
 description: 大学数学与人工智能讲义，含 PDF、实战与数学基础。
 hot: true
