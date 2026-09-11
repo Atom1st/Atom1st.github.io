@@ -1,5 +1,20 @@
 [
   {
+    "id": "laoren",
+    "title": "老任",
+    "date": "2026-9-11",
+    "category": "个人记录",
+    "tags": [
+      "随笔"
+    ],
+    "description": "纪念老任老师",
+    "type": "article",
+    "origin": "original",
+    "access": "public",
+    "passwordHash": "",
+    "hot": false
+  },
+  {
     "id": "protected-demo",
     "title": "受保护文章示例",
     "date": "2026-08-31",
@@ -89,21 +104,6 @@
       "随笔"
     ],
     "description": "5月16日的个人记录",
-    "type": "article",
-    "origin": "original",
-    "access": "public",
-    "passwordHash": "",
-    "hot": false
-  },
-  {
-    "id": "laoren",
-    "title": "老任",
-    "date": "2026-05-16",
-    "category": "个人记录",
-    "tags": [
-      "随笔"
-    ],
-    "description": "纪念老任老师",
     "type": "article",
     "origin": "original",
     "access": "public",
