@@ -7,6 +7,7 @@ const articles = (articlesData as any[])
   .sort((a, b) => b.date.localeCompare(a.date));
 
 const categories = [
+  '全部',
   '个人记录',
   '科技工程',
   '算法理论',
@@ -15,54 +16,78 @@ const categories = [
   '休闲娱乐',
   '闲话',
 ];
-
-// Get category from localStorage (persisted across page loads in same session)
-// localStorage is only available on client, so use fallback to first category
-let selectedCategory = categories[0];
-if (typeof window !== 'undefined') {
-  const storedCategory = localStorage.getItem('articleCategory');
-  if (storedCategory) {
-    selectedCategory = storedCategory;
-  }
-}
 ---
 <BaseLayout title="文章">
   <main class="content">
     <h1 class="page-title">文章</h1>
     <p class="page-sub">全部技术文章，按发布时间倒序排列</p>
 
-    <div class="category-filters">
+    <div class="category-filters" id="categoryFilters">
       {categories.map((cat) => (
-        <a 
-          class={selectedCategory === cat ? 'active' : ''} 
-          onClick={(e: any) => {
-            e.preventDefault();
-            localStorage.setItem('articleCategory', cat);
-            window.location.href = '/articles';
-          }}
+        <a
+          class={cat === '全部' ? 'active' : ''}
+          data-category={cat === '全部' ? '' : cat}
         >
           {cat}
         </a>
       ))}
     </div>
 
-    <p class="page-sub" style="margin-top: 12px; color: var(--muted);">
-      {selectedCategory ? `显示类别: ${selectedCategory}` : '显示全部'}
+    <p class="page-sub" id="categoryLabel" style="margin-top: 12px; color: var(--muted);">
+      显示全部
     </p>
 
-    <div class="card-group">
-      {articles
-        .filter((e) => e.category === selectedCategory)
-        .map((e) => (
-          <a class="card" href={`/articles/${e.id}`}>
-            <div class="badges">
-              <span class={`badge ${e.origin}`}>{e.origin === 'original' ? '原创' : '搬运'}</span>
-              <span class={`badge ${e.access}`}>{e.access === 'public' ? '公共' : '受保护'}</span>
-            </div>
-            <h3>{e.title}</h3>
-            {e.description && <p>{e.description}</p>}
-            <div class="meta">
-              <i class="far fa-calendar"></i> {e.date} · <i class="fas fa-folder"></i> {e.category}
-            </div>
-          </a>
-        ))
+    <div class="card-group" id="articleList">
+      {articles.map((e) => (
+        <a class="card" data-category={e.category} href={`/articles/${e.id}`}>
+          <div class="badges">
+            <span class={`badge ${e.origin}`}>{e.origin === 'original' ? '原创' : '搬运'}</span>
+            <span class={`badge ${e.access}`}>{e.access === 'public' ? '公共' : '受保护'}</span>
+          </div>
+          <h3>{e.title}</h3>
+          {e.description && <p>{e.description}</p>}
+          <div class="meta">
+            <i class="far fa-calendar"></i> {e.date} · <i class="fas fa-folder"></i> {e.category}
+          </div>
+        </a>
+      ))}
+    </div>
+  </main>
+
+  <script is:inline>
+    (function () {
+      const filters = document.getElementById('categoryFilters');
+      if (!filters) return;
+
+      var selected = localStorage.getItem('articleCategory') || '';
+
+      function apply(cat) {
+        selected = cat;
+        localStorage.setItem('articleCategory', cat);
+
+        filters.querySelectorAll('a').forEach(function (a) {
+          a.classList.toggle('active', a.getAttribute('data-category') === cat);
+        });
+
+        var label = document.getElementById('categoryLabel');
+        if (label) label.textContent = cat ? '显示类别: ' + cat : '显示全部';
+
+        document.querySelectorAll('#articleList .card').forEach(function (card) {
+          if (!cat || card.getAttribute('data-category') === cat) {
+            card.style.display = '';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      }
+
+      filters.querySelectorAll('a').forEach(function (a) {
+        a.addEventListener('click', function () {
+          apply(a.getAttribute('data-category') || '');
+        });
+      });
+
+      apply(selected);
+    })();
+  </script>
+</BaseLayout>
