@@ -28,7 +28,7 @@ const selectedCategory = url.searchParams.get('category') || undefined;
     <div class="category-filters">
       <a class={!selectedCategory ? 'active' : ''} href="/articles">全部</a>
       {categories.map((cat) => (
-        <a class={selectedCategory === cat ? 'active' : ''} href={`/articles?category=${cat}`}>
+        <a class={selectedCategory && selectedCategory === cat ? 'active' : ''} href={`/articles?category=${cat}`}>
           {cat}
         </a>
       ))}
