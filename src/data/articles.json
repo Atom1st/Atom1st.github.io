@@ -15,6 +15,21 @@
     "hot": false
   },
   {
+    "id": "sciencelyuseweb",
+    "title": "科学上网，避免茧房效应",
+    "date": "2026-09-12",
+    "category": "个人记录",
+    "tags": [
+      "倡议书"
+    ],
+    "description": "面对信息复杂的网络，青少年时常陷入茧房效应，该如何使用科学家提出的方法合理使用网络呢",
+    "type": "article",
+    "origin": "original",
+    "access": "protected",
+    "passwordHash": "65cbc947460edde6b0d908f1856f96e375dd198c4df69cdc6bbf444790bb354d",
+    "hot": false
+  },
+  {
     "id": "protected-demo",
     "title": "受保护文章示例",
     "date": "2026-08-31",
