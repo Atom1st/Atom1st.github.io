@@ -7,7 +7,7 @@
 - ✅ **文章 AES-256-GCM 加密**：受保护文章正文加密存储，用户输入密码解密，同会话免重复输入
 - ✅ **评论区主题同步**：Giscus 评论区自动跟随站点亮/暗模式
 
-线上地址：<https://atom1st.github.io>
+线上地址：<https://guiyihan.top>
 
 ---
 
@@ -265,7 +265,7 @@ git commit -m "更新内容"
 git push origin main
 ```
 
-约 1–2 分钟后访问 <https://atom1st.github.io> 即为最新版。
+约 1–2 分钟后访问 <https://guiyihan.top> 即为最新版。
 
 ### 完整工作流
 

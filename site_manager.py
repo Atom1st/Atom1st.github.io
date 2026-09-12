@@ -1077,7 +1077,7 @@ class DeployPanel(ScrollPanel):
     def _build(self):
         self.sizer.Clear(True)
         self.sizer.Add(make_text(self, "🚀 部署管理", (14, True)), 0, wx.ALL, 12)
-        self.sizer.Add(make_info(self, "Git 操作：查看状态、提交、推送至 atom1st.github.io。"), 0, wx.LEFT | wx.BOTTOM, 12)
+        self.sizer.Add(make_info(self, "Git 操作：查看状态、提交、推送至 guiyihan.top。"), 0, wx.LEFT | wx.BOTTOM, 12)
 
         self._add_tutorial()
 
@@ -1137,7 +1137,7 @@ class DeployPanel(ScrollPanel):
             ("使用流程", [
                 "1. 先在下方填写「提交信息」，例如：更新文章 xxx",
                 "2. 点击「⚡ 一键提交推送」，工具会自动执行 git add → commit → push",
-                "3. GitHub Actions 会在 1-2 分钟内自动构建并部署到 https://atom1st.github.io",
+                "3. GitHub Actions 会在 1-2 分钟内自动构建并部署到 https://guiyihan.top",
             ]),
             ("日常改文章（公开）", [
                 "在「文章管理」里新建/编辑文章 → 保存后，直接到本页一键提交推送即可。",
