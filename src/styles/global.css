@@ -254,10 +254,29 @@ a:hover { color: var(--accent); text-decoration: underline; }
 .badge.public { background: var(--success); color: #fff; }
 .badge.protected { background: var(--warning); color: #fff; }
 
-/* 卡片标题后的状态 emoji：原创 ✍️ / 搬运 🔁 / 加密 🔒 */
-.card h3 .mark { margin-left: 6px; font-size: 0.85em; }
+/* 卡片标题后的状态图标（与导航栏同款 Font Awesome）：原创 / 搬运 / 加密 */
+.card h3 .mark { margin-left: 8px; font-size: 0.8em; }
+.card h3 .mark.origin { color: var(--accent); }
+.card h3 .mark.repost { color: var(--muted); }
+.card h3 .mark.lock { color: var(--warning); }
 
-/* 分类色块：不同分类不同颜色 */
+/* 分类配色：每个分类一种颜色，亮色主题 */
+.cat-jilu     { --cat: #0969DA; --cat-bg: rgba(9, 105, 218, 0.12); }
+.cat-wenxue   { --cat: #8250DF; --cat-bg: rgba(130, 80, 223, 0.12); }
+.cat-lilun    { --cat: #1B7C83; --cat-bg: rgba(27, 124, 131, 0.12); }
+.cat-xuexi    { --cat: #BC4C00; --cat-bg: rgba(188, 76, 0, 0.12); }
+.cat-shenghuo { --cat: #BF3989; --cat-bg: rgba(191, 57, 137, 0.12); }
+.cat-pinglun  { --cat: #CF222E; --cat-bg: rgba(207, 34, 46, 0.12); }
+
+/* 分类配色：暗色主题（提亮适配） */
+[data-theme="dark"] .cat-jilu     { --cat: #79B8FF; --cat-bg: rgba(56, 139, 253, 0.22); }
+[data-theme="dark"] .cat-wenxue   { --cat: #D2A8FF; --cat-bg: rgba(163, 113, 247, 0.22); }
+[data-theme="dark"] .cat-lilun    { --cat: #39C5CF; --cat-bg: rgba(57, 197, 207, 0.18); }
+[data-theme="dark"] .cat-xuexi    { --cat: #FFA657; --cat-bg: rgba(255, 166, 87, 0.18); }
+[data-theme="dark"] .cat-shenghuo { --cat: #FF9BCE; --cat-bg: rgba(255, 155, 206, 0.18); }
+[data-theme="dark"] .cat-pinglun  { --cat: #FF7B72; --cat-bg: rgba(255, 123, 114, 0.18); }
+
+/* 分类色块 */
 .cat-chip {
     display: inline-block;
     font-size: 12px;
@@ -266,13 +285,25 @@ a:hover { color: var(--accent); text-decoration: underline; }
     border-radius: 2px;
     line-height: 1.6;
     vertical-align: middle;
+    background: var(--cat-bg, var(--code-bg));
+    color: var(--cat, var(--accent));
 }
-.cat-jilu     { background: rgba(59, 130, 246, 0.16); color: #3b82f6; }
-.cat-wenxue   { background: rgba(139, 92, 246, 0.16); color: #8b5cf6; }
-.cat-lilun    { background: rgba(13, 148, 136, 0.16); color: #0d9488; }
-.cat-xuexi    { background: rgba(245, 158, 11, 0.18); color: #d97706; }
-.cat-shenghuo { background: rgba(236, 72, 153, 0.16); color: #ec4899; }
-.cat-pinglun  { background: rgba(239, 68, 68, 0.16);  color: #ef4444; }
+
+/* 文章列表：单行卡片式列表 */
+.card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.card-list .card {
+    display: block;
+    margin: 0;
+    padding: 12px 18px;
+    border-left-color: var(--cat, var(--accent));
+}
+.card-list .card h3 { margin-bottom: 4px; font-size: 17px; }
+.card-list .card p { font-size: 14px; }
+.card-list .card .meta { margin-top: 4px; }
 
 /* 受保护内容提示 */
 .notice {

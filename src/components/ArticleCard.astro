@@ -7,19 +7,19 @@ interface Props {
 const { entry } = Astro.props;
 const fmt = entry.data.date.toISOString().slice(0, 10);
 ---
-<a class="card" href={`/articles/${entry.id}`}>
+<a class={`card ${catClass(entry.data.category)}`} href={`/articles/${entry.id}`}>
   <h3>
     {entry.data.title}
     {entry.data.origin === 'original' ? (
-      <span class="mark" title="原创">✍️</span>
+      <i class="fas fa-pen-nib mark origin" title="原创"></i>
     ) : (
-      <span class="mark" title="搬运">🔁</span>
+      <i class="fas fa-share mark repost" title="搬运"></i>
     )}
-    {entry.data.access === 'protected' && <span class="mark" title="加密">🔒</span>}
+    {entry.data.access === 'protected' && <i class="fas fa-lock mark lock" title="加密"></i>}
   </h3>
   {entry.data.description && <p>{entry.data.description}</p>}
   <div class="meta">
-    <span class={`cat-chip ${catClass(entry.data.category)}`}>{entry.data.category}</span>
+    <span class="cat-chip">{entry.data.category}</span>
     &nbsp;· <i class="far fa-calendar"></i> {fmt}
   </div>
 </a>

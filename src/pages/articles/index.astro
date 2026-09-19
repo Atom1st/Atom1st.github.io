@@ -28,21 +28,21 @@ const articles = (articlesData as any[])
       显示全部
     </p>
 
-    <div class="card-group" id="articleList">
+    <div class="card-list" id="articleList">
       {articles.map((e) => (
-        <a class="card" data-category={e.category} href={`/articles/${e.id}`}>
+        <a class={`card ${catClass(e.category)}`} data-category={e.category} href={`/articles/${e.id}`}>
           <h3>
             {e.title}
             {e.origin === 'original' ? (
-              <span class="mark" title="原创">✍️</span>
+              <i class="fas fa-pen-nib mark origin" title="原创"></i>
             ) : (
-              <span class="mark" title="搬运">🔁</span>
+              <i class="fas fa-share mark repost" title="搬运"></i>
             )}
-            {e.access === 'protected' && <span class="mark" title="加密">🔒</span>}
+            {e.access === 'protected' && <i class="fas fa-lock mark lock" title="加密"></i>}
           </h3>
           {e.description && <p>{e.description}</p>}
           <div class="meta">
-            <span class={`cat-chip ${catClass(e.category)}`}>{e.category}</span>
+            <span class="cat-chip">{e.category}</span>
             &nbsp;· <i class="far fa-calendar"></i> {e.date}
           </div>
         </a>
