@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import articlesData from '../data/articles.json';
+import { catClass } from '../lib/categories';
 
 const all = (articlesData as any[]).filter((p) => p.type !== 'page');
 const latest = all
@@ -24,14 +25,19 @@ const hot = all
     <div class="card-group">
       {latest.map((e) => (
         <a class="card" href={`/articles/${e.id}`}>
-          <div class="badges">
-            <span class={`badge ${e.origin}`}>{e.origin === 'original' ? '原创' : '搬运'}</span>
-            <span class={`badge ${e.access}`}>{e.access === 'public' ? '公共' : '受保护'}</span>
-          </div>
-          <h3>{e.title}</h3>
+          <h3>
+            {e.title}
+            {e.origin === 'original' ? (
+              <span class="mark" title="原创">✍️</span>
+            ) : (
+              <span class="mark" title="搬运">🔁</span>
+            )}
+            {e.access === 'protected' && <span class="mark" title="加密">🔒</span>}
+          </h3>
           {e.description && <p>{e.description}</p>}
           <div class="meta">
-            <i class="far fa-calendar"></i> {e.date} · <i class="fas fa-folder"></i> {e.category}
+            <span class={`cat-chip ${catClass(e.category)}`}>{e.category}</span>
+            &nbsp;· <i class="far fa-calendar"></i> {e.date}
           </div>
         </a>
       ))}

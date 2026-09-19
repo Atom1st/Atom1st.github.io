@@ -3,10 +3,7 @@
     "id": "laoren",
     "title": "老任",
     "date": "2026-9-11",
-    "category": "个人记录",
-    "tags": [
-      "随笔"
-    ],
+    "category": "记录",
     "description": "纪念老任老师",
     "type": "article",
     "origin": "original",
@@ -18,10 +15,7 @@
     "id": "sciencelyuseweb",
     "title": "科学上网，避免茧房效应",
     "date": "2026-09-12",
-    "category": "个人记录",
-    "tags": [
-      "倡议书"
-    ],
+    "category": "记录",
     "description": "面对信息复杂的网络，青少年时常陷入茧房效应，该如何使用科学家提出的方法合理使用网络呢",
     "type": "article",
     "origin": "original",
@@ -33,11 +27,7 @@
     "id": "protected-demo",
     "title": "受保护文章示例",
     "date": "2026-08-31",
-    "category": "个人记录",
-    "tags": [
-      "受保护",
-      "示例"
-    ],
+    "category": "记录",
     "description": "这是一篇受密码保护的文章示例",
     "type": "article",
     "origin": "original",
@@ -49,10 +39,7 @@
     "id": "bayi",
     "title": "批判所谓“以军正义”之言论",
     "date": "2026-08-29",
-    "category": "闲话",
-    "tags": [
-      "键政，国际局势"
-    ],
+    "category": "评论",
     "description": "批判所谓支持以军暴行之观点",
     "type": "article",
     "origin": "original",
@@ -64,11 +51,7 @@
     "id": "camp-travel-note",
     "title": "2026 丘成桐夏令营游记",
     "date": "2026-08-28",
-    "category": "生活游记",
-    "tags": [
-      "夏令营",
-      "游记"
-    ],
+    "category": "生活",
     "description": "丘成桐青少年数学与人工智能夏令营游记",
     "type": "article",
     "origin": "original",
@@ -80,11 +63,7 @@
     "id": "about",
     "title": "@Guiyihan 的博客",
     "date": "2026-08-27",
-    "category": "个人记录",
-    "tags": [
-      "关于",
-      "站长"
-    ],
+    "category": "记录",
     "description": "",
     "type": "page",
     "origin": "original",
@@ -96,13 +75,7 @@
     "id": "camp-resource",
     "title": "2026 丘成桐青少年数学与人工智能夏令营课件",
     "date": "2026-08-20",
-    "category": "科技工程",
-    "tags": [
-      "夏令营",
-      "PDF",
-      "课件",
-      "下载"
-    ],
+    "category": "学习",
     "description": "大学数学与人工智能讲义，含 PDF、实战与数学基础。",
     "type": "resource",
     "origin": "original",
@@ -114,10 +87,7 @@
     "id": "2026-5-16",
     "title": "5月16日记录",
     "date": "2026-05-16",
-    "category": "个人记录",
-    "tags": [
-      "随笔"
-    ],
+    "category": "记录",
     "description": "5月16日的个人记录",
     "type": "article",
     "origin": "original",

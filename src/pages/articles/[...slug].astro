@@ -51,7 +51,6 @@ if (isEncrypted) {
     title: entry.data.title,
     date: entry.data.date.toISOString().slice(0, 10),
     category: entry.data.category,
-    tags: entry.data.tags,
     origin: entry.data.origin,
     access: entry.data.access,
     passwordHash: entry.data.password || '',
@@ -76,7 +75,6 @@ const encFileUrl = `/encrypted/${articleMeta.id}.json`;
       category={articleMeta.category}
       words={words}
       minutes={minutes}
-      tags={articleMeta.tags}
       origin={articleMeta.origin}
       access={articleMeta.access}
     />

@@ -1,8 +1,7 @@
 ---
 title: 老任
 date: 2026-9-11
-category: 个人记录
-tags: [随笔]
+category: 记录
 description: 纪念老任老师
 type: article
 ---

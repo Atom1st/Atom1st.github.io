@@ -2,13 +2,12 @@ import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
 const validCategories = [
-  '个人记录',
-  '科技工程',
-  '算法理论',
-  '生活游记',
-  '学习文化课',
-  '休闲娱乐',
-  '闲话',
+  '记录',
+  '文学',
+  '理论',
+  '学习',
+  '生活',
+  '评论',
 ];
 
 const posts = defineCollection({
@@ -17,7 +16,6 @@ const posts = defineCollection({
     title: z.string(),
     date: z.coerce.date(),
     category: z.enum(validCategories),
-    tags: z.array(z.string()).default([]),
     description: z.string().optional(),
     hot: z.boolean().default(false),
     type: z.enum(['article', 'resource', 'page']).default('article'),

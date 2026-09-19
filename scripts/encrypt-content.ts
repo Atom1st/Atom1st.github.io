@@ -23,7 +23,6 @@ interface ArticleMeta {
   title: string;
   date: string;
   category: string;
-  tags: string[];
   description: string;
   type: string;
   origin: string;
@@ -82,7 +81,6 @@ function main() {
       title: data.title || slug,
       date: data.date ? String(data.date).slice(0, 10) : '2026-01-01',
       category: data.category || '未分类',
-      tags: Array.isArray(data.tags) ? data.tags : [],
       description: data.description || '',
       type: data.type || 'article',
       origin: data.origin || 'original',

@@ -1,21 +1,25 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import { catClass } from '../lib/categories';
 interface Props {
   entry: CollectionEntry<'posts'>;
 }
 const { entry } = Astro.props;
 const fmt = entry.data.date.toISOString().slice(0, 10);
-const originLabel = entry.data.origin === 'original' ? '原创' : '搬运';
-const accessLabel = entry.data.access === 'public' ? '公共' : '受保护';
 ---
 <a class="card" href={`/articles/${entry.id}`}>
-  <div class="badges">
-    <span class={`badge ${entry.data.origin}`}>{originLabel}</span>
-    <span class={`badge ${entry.data.access}`}>{accessLabel}</span>
-  </div>
-  <h3>{entry.data.title}</h3>
+  <h3>
+    {entry.data.title}
+    {entry.data.origin === 'original' ? (
+      <span class="mark" title="原创">✍️</span>
+    ) : (
+      <span class="mark" title="搬运">🔁</span>
+    )}
+    {entry.data.access === 'protected' && <span class="mark" title="加密">🔒</span>}
+  </h3>
   {entry.data.description && <p>{entry.data.description}</p>}
   <div class="meta">
-    <i class="far fa-calendar"></i> {fmt} · <i class="fas fa-folder"></i> {entry.data.category}
+    <span class={`cat-chip ${catClass(entry.data.category)}`}>{entry.data.category}</span>
+    &nbsp;· <i class="far fa-calendar"></i> {fmt}
   </div>
 </a>

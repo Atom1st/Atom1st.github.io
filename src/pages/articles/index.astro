@@ -1,21 +1,12 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import articlesData from '../../data/articles.json';
+import { CATEGORIES, catClass } from '../../lib/categories';
 
 const articles = (articlesData as any[])
   .filter((p) => p.type === 'article')
   .sort((a, b) => b.date.localeCompare(a.date));
 
-const categories = [
-  '全部',
-  '个人记录',
-  '科技工程',
-  '算法理论',
-  '生活游记',
-  '学习文化课',
-  '休闲娱乐',
-  '闲话',
-];
 ---
 <BaseLayout title="文章">
   <main class="content">
@@ -23,7 +14,7 @@ const categories = [
     <p class="page-sub">全部技术文章，按发布时间倒序排列</p>
 
     <div class="category-filters" id="categoryFilters">
-      {categories.map((cat) => (
+      {CATEGORIES.map((cat) => (
         <a
           class={cat === '全部' ? 'active' : ''}
           data-category={cat === '全部' ? '' : cat}
@@ -40,14 +31,19 @@ const categories = [
     <div class="card-group" id="articleList">
       {articles.map((e) => (
         <a class="card" data-category={e.category} href={`/articles/${e.id}`}>
-          <div class="badges">
-            <span class={`badge ${e.origin}`}>{e.origin === 'original' ? '原创' : '搬运'}</span>
-            <span class={`badge ${e.access}`}>{e.access === 'public' ? '公共' : '受保护'}</span>
-          </div>
-          <h3>{e.title}</h3>
+          <h3>
+            {e.title}
+            {e.origin === 'original' ? (
+              <span class="mark" title="原创">✍️</span>
+            ) : (
+              <span class="mark" title="搬运">🔁</span>
+            )}
+            {e.access === 'protected' && <span class="mark" title="加密">🔒</span>}
+          </h3>
           {e.description && <p>{e.description}</p>}
           <div class="meta">
-            <i class="far fa-calendar"></i> {e.date} · <i class="fas fa-folder"></i> {e.category}
+            <span class={`cat-chip ${catClass(e.category)}`}>{e.category}</span>
+            &nbsp;· <i class="far fa-calendar"></i> {e.date}
           </div>
         </a>
       ))}
