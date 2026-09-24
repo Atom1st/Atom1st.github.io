@@ -1,7 +1,7 @@
 export const site = {
   title: 'Guiyihan的博客',
   name: 'Guiyihan',
-  bio: '探求人工智能的至真至美',
+  bio: '路漫漫其修远兮，吾将上下而求索',
   avatar: '/my.jpg',
   nav: [
     { href: '/', label: '主页', icon: 'fa-house' },
