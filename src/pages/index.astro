@@ -12,12 +12,26 @@ const hot = all
   .filter((p) => p.hot)
   .sort((a, b) => b.date.localeCompare(a.date));
 ---
-<BaseLayout>
+<BaseLayout showHero>
   <main class="content">
     <h1 class="page-title">追求人工智能的至真至美</h1>
     <p class="page-sub">有组织、有顺序、低门槛的 AI 与数学学习资源站</p>
 
-    <div class="hero-banner" role="img" aria-label="主页横幅插画：亮色主题为日间海湾，暗色主题为月夜海湾"></div>
+    <picture class="hero-banner">
+      <source media="(prefers-color-scheme: dark)" srcset="/ghptnight.webp" type="image/webp" />
+      <img
+        src="/ghptlight.webp"
+        alt="主页横幅插画：亮色主题为日间海湾，暗色主题为月夜海湾"
+        width="1920"
+        height="806"
+        fetchpriority="high"
+        decoding="async"
+        data-theme-src="/ghptlight.webp"
+        data-theme-src-dark="/ghptnight.webp"
+        data-theme-fallback="/ghptlight.png"
+        data-theme-fallback-dark="/ghptnight.png"
+      />
+    </picture>
 
     <h2>本站简介</h2>
     <p>从 1956 年的达特茅斯会议，到今天 DeepSeek、ChatGPT 这样的大模型，AI 正以前所未有的加速度发展。它比物理、历史等传统学科年轻得多，却已在不到一个世纪里深刻改变了我们的生活，有学者将其繁荣称作"第四次工业革命"。</p>
@@ -68,3 +82,39 @@ const hot = all
     </div>
   </main>
 </BaseLayout>
+
+<script is:inline>
+  // 主页横幅跟随主题切换：手动点按钮或系统偏好变化时，同步替换 <img> 的图源
+  (function () {
+    const img = document.querySelector('.hero-banner img');
+    if (!img) return;
+
+    function swapForTheme(theme) {
+      const isDark = theme === 'dark';
+      const target = isDark ? img.dataset.themeSrcDark : img.dataset.themeSrc;
+      if (target && !img.src.endsWith(target)) img.src = target;
+      const hint = isDark ? img.dataset.themeFallbackDark : img.dataset.themeFallback;
+      if (hint) img.dataset.fallback = hint;
+    }
+
+    function currentTheme() {
+      return document.documentElement.getAttribute('data-theme') || 'light';
+    }
+
+    // 初始同步（顶栏脚本可能已抢先设置 data-theme）
+    swapForTheme(currentTheme());
+
+    // 监听 <html data-theme> 变化：用户切换、系统偏好变化都会走到这里
+    new MutationObserver(() => swapForTheme(currentTheme())).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+
+    // 图片加载失败（如不支持 WebP）时回退到 PNG
+    img.addEventListener('error', () => {
+      const fallback =
+        currentTheme() === 'dark' ? img.dataset.themeFallbackDark : img.dataset.themeFallback;
+      if (fallback && !img.src.endsWith(fallback)) img.src = fallback;
+    });
+  })();
+</script>

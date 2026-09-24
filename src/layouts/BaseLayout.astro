@@ -7,8 +7,10 @@ import { site } from '../site';
 
 interface Props {
   title?: string;
+  /** 该页面是否包含首屏横幅（主页为 true）：用于提前预加载对应主题的横幅图 */
+  showHero?: boolean;
 }
-const { title } = Astro.props;
+const { title, showHero = false } = Astro.props;
 const pageTitle = title ? `${title} - ${site.title}` : site.title;
 ---
 
@@ -20,6 +22,30 @@ const pageTitle = title ? `${title} - ${site.title}` : site.title;
     <title>{pageTitle}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css" />
   <link rel="icon" href="/my.jpg" type="image/jpg" />
+    {showHero && (
+      <script is:inline>
+        // 在 CSS/JS 之前预加载横幅图：只加载当前主题那张，避免浪费带宽
+        (function () {
+          const saved = localStorage.getItem('theme');
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const theme = saved || (prefersDark ? 'dark' : 'light');
+          const base = theme === 'dark' ? '/ghptnight' : '/ghptlight';
+          const supportsWebp = (function () {
+            try {
+              return document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0;
+            } catch (e) {
+              return false;
+            }
+          })();
+          const link = document.createElement('link');
+          link.rel = 'preload';
+          link.as = 'image';
+          link.href = base + (supportsWebp ? '.webp' : '.png');
+          link.setAttribute('fetchpriority', 'high');
+          document.head.appendChild(link);
+        })();
+      </script>
+    )}
   </head>
   <body>
     <Topbar />
