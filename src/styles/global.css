@@ -226,6 +226,20 @@ a:hover { color: var(--accent); text-decoration: underline; }
     padding-left: 20px;
 }
 
+/* 主页横幅：亮色显示日景 ghptlight，暗色显示月夜 ghptnight */
+.hero-banner {
+    width: 100%;
+    aspect-ratio: 1920 / 806;
+    background-image: url('/ghptlight.png');
+    background-size: cover;
+    background-position: center;
+    border: 1px solid var(--border);
+    margin-bottom: 32px;
+}
+[data-theme="dark"] .hero-banner {
+    background-image: url('/ghptnight.png');
+}
+
 /* 卡片 */
 .card {
     display: block;
