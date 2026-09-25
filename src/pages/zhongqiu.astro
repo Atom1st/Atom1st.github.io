@@ -1,0 +1,539 @@
+---
+// 月满中秋 · 星辰大海 —— 中秋特别页（/zhongqiu）
+// 完整自包含页面：背景图 /zhongqiu/ghptclear.png，音乐 /zhongqiu/zhongqiu.mp3（位于 public/zhongqiu/）
+---
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>月满中秋 · 星辰大海</title>
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@300;400;600&display=swap" rel="stylesheet">
+<style is:global>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#050a1e; cursor:crosshair; }
+  body { font-family:'Noto Serif SC', serif; }
+
+  .bg {
+    position:fixed; inset:0; z-index:0;
+    background:url('/zhongqiu/ghptclear.png') center/cover no-repeat;
+    animation: bgBreath 30s ease-in-out infinite;
+  }
+  @keyframes bgBreath {
+    0%,100% { transform:scale(1); filter:brightness(1); }
+    50%     { transform:scale(1.06); filter:brightness(1.12); }
+  }
+
+  .vignette {
+    position:fixed; inset:0; z-index:1; pointer-events:none;
+    background:radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(3,6,20,.55) 100%);
+  }
+
+  .moon-glow {
+    position:fixed; z-index:2; pointer-events:none;
+    width:46vmin; height:46vmin; border-radius:50%;
+    left:71%; top:12%;
+    transform:translate(-50%,-50%);
+    background:radial-gradient(circle, rgba(255,244,214,.55) 0%, rgba(255,238,190,.18) 35%, transparent 70%);
+    filter:blur(6px);
+    animation: glowPulse 6s ease-in-out infinite;
+    mix-blend-mode:screen;
+  }
+  @keyframes glowPulse {
+    0%,100% { opacity:.8; transform:translate(-50%,-50%) scale(1); }
+    50%     { opacity:1;  transform:translate(-50%,-50%) scale(1.12); }
+  }
+
+  canvas { position:fixed; inset:0; z-index:3; }
+
+  .title-wrap {
+    position:fixed; z-index:5; left:50%; top:9%;
+    transform:translateX(-50%);
+    text-align:center; pointer-events:none;
+    opacity:0;
+    animation:fadeDown 2.5s ease .5s forwards;
+  }
+  @keyframes fadeDown { from{opacity:0; transform:translate(-50%,-30px);} to{opacity:1; transform:translate(-50%,0);} }
+  .title-main {
+    font-family:'Ma Shan Zheng', cursive;
+    font-size:clamp(42px, 8vw, 96px);
+    letter-spacing:.18em;
+    background:linear-gradient(180deg,#fff8e0 10%, #ffd98a 55%, #e8a94e 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 0 40px rgba(255,210,120,.35);
+    animation:titleShine 5s ease-in-out infinite;
+  }
+  @keyframes titleShine {
+    0%,100% { filter:drop-shadow(0 0 12px rgba(255,215,130,.4)); }
+    50%     { filter:drop-shadow(0 0 30px rgba(255,225,150,.8)); }
+  }
+  .title-sub {
+    margin-top:10px; font-size:clamp(12px,1.6vw,18px);
+    letter-spacing:.9em; text-indent:.9em; color:rgba(255,240,210,.75);
+    font-weight:300;
+  }
+  .title-line {
+    width:120px; height:1px; margin:14px auto 0;
+    background:linear-gradient(90deg, transparent, rgba(255,220,150,.8), transparent);
+  }
+
+  /* ---------- 诗词：点击处浮现 ---------- */
+  .poem {
+    position:fixed; z-index:5; pointer-events:none;
+    writing-mode:vertical-rl;
+    font-family:'Ma Shan Zheng','Noto Serif SC',serif;
+    font-size:clamp(16px, 2.2vw, 28px);
+    letter-spacing:.42em;
+    line-height:1.8;
+    color:rgba(255,244,220,0);
+    text-shadow:0 0 18px rgba(255,220,150,0);
+    opacity:0;
+    transform:translateY(20px);
+    transition:opacity 2.5s ease, transform 2.5s ease, color 2.5s ease, text-shadow 2.5s ease;
+    user-select:none;
+    white-space:nowrap;
+  }
+  .poem.show {
+    opacity:1;
+    transform:translateY(0);
+    color:rgba(255,244,220,.92);
+    text-shadow:0 0 22px rgba(255,215,130,.55), 0 0 60px rgba(255,190,90,.25);
+  }
+  .poem.hide {
+    opacity:0;
+    transform:translateY(-20px);
+    color:rgba(255,244,220,0);
+    text-shadow:0 0 18px rgba(255,220,150,0);
+  }
+
+  .hint {
+    position:fixed; z-index:6; left:50%; bottom:26px;
+    transform:translateX(-50%);
+    font-size:13px; letter-spacing:.35em; text-indent:.35em;
+    color:rgba(255,240,210,.55); pointer-events:none;
+    animation:hintFade 4s ease-in-out infinite;
+    white-space:nowrap;
+  }
+  @keyframes hintFade { 0%,100%{opacity:.35;} 50%{opacity:.9;} }
+
+  .music-btn {
+    position:fixed; z-index:7; right:26px; bottom:22px;
+    width:52px; height:52px; border-radius:50%;
+    border:1px solid rgba(255,220,150,.45);
+    background:rgba(10,16,40,.45); backdrop-filter:blur(8px);
+    color:#ffe9b8; font-size:20px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:.3s;
+  }
+  .music-btn:hover { box-shadow:0 0 24px rgba(255,210,120,.5); transform:scale(1.08); }
+  .music-btn.playing { animation:spin 4s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .back-home {
+    position:fixed; z-index:7; left:26px; bottom:22px;
+    padding:8px 18px; border-radius:20px;
+    border:1px solid rgba(255,220,150,.35);
+    background:rgba(10,16,40,.45); backdrop-filter:blur(8px);
+    color:rgba(255,233,184,.85); font-size:13px; letter-spacing:.2em; text-indent:.2em;
+    text-decoration:none; cursor:pointer;
+    transition:.3s;
+  }
+  .back-home:hover { box-shadow:0 0 20px rgba(255,210,120,.4); color:#ffe9b8; }
+
+  .overlay {
+    position:fixed; inset:0; z-index:20;
+    background:#03060f;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:26px; cursor:pointer;
+    transition:opacity 1.6s ease;
+  }
+  .overlay.hide { opacity:0; pointer-events:none; }
+  .overlay-moon {
+    width:110px; height:110px; border-radius:50%;
+    background:radial-gradient(circle at 38% 35%, #fff8e2, #f5d98a 60%, #d9a94e);
+    box-shadow:0 0 60px rgba(255,225,150,.7), 0 0 140px rgba(255,200,100,.35);
+    animation:overlayMoon 3s ease-in-out infinite;
+  }
+  @keyframes overlayMoon { 0%,100%{transform:scale(1);} 50%{transform:scale(1.07);} }
+  .overlay-text {
+    font-family:'Ma Shan Zheng',cursive;
+    font-size:clamp(22px,3.4vw,34px); letter-spacing:.3em; text-indent:.3em;
+    color:rgba(255,240,210,.9);
+  }
+  .overlay-tip {
+    font-size:13px; letter-spacing:.4em; text-indent:.4em;
+    color:rgba(255,240,210,.4);
+    animation:hintFade 3s ease-in-out infinite;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="vignette"></div>
+<div class="moon-glow"></div>
+
+<canvas id="fx"></canvas>
+
+<div class="title-wrap">
+  <div class="title-main">月满中秋</div>
+  <div class="title-line"></div>
+  <div class="title-sub">海 上 生 明 月 · 天 涯 共 此 时</div>
+</div>
+
+<div class="poem" id="p1">明月几时有？把酒问青天。</div>
+<div class="poem" id="p2">今夜月明人尽望，不知秋思落谁家。</div>
+<div class="poem" id="p3">海上生明月，天涯共此时。</div>
+<div class="poem" id="p4">此生此夜不长好，明月明年何处看。</div>
+<div class="poem" id="p5">举杯邀明月，对影成三人。</div>
+
+<div class="hint">移 动 鼠 标 拂 动 星 辰 · 点 击 夜 空 浮 现 诗 句</div>
+<button class="music-btn" id="musicBtn" title="背景音乐">♪</button>
+<a class="back-home" href="/">← 返回首页</a>
+
+<div class="overlay" id="overlay">
+  <div class="overlay-moon"></div>
+  <div class="overlay-text">中 秋 夜 · 星 辰 大 海</div>
+  <div class="overlay-tip">点 击 进 入 夜 空</div>
+</div>
+
+<!-- 隐藏的音乐播放器 -->
+<audio id="bgm" src="/zhongqiu/zhongqiu.mp3" loop preload="auto"></audio>
+
+<script is:inline>
+/* ============================================================
+   月满中秋 · 星辰大海  —— 交互粒子引擎
+   ============================================================ */
+const cv = document.getElementById('fx');
+const ctx = cv.getContext('2d');
+let W, H, DPR;
+
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+resize();
+addEventListener('resize', resize);
+
+/* ---------- 鼠标 ---------- */
+const mouse = { x:-9999, y:-9999, tx:-9999, ty:-9999 };
+addEventListener('mousemove', e => { mouse.tx = e.clientX; mouse.ty = e.clientY; });
+addEventListener('mouseleave', () => { mouse.tx = -9999; mouse.ty = -9999; });
+
+/* ============================================================
+   1. 星星
+   ============================================================ */
+const stars = [];
+const STAR_N = Math.min(260, Math.floor(innerWidth * innerHeight / 6000));
+for(let i=0;i<STAR_N;i++){
+  stars.push({
+    x: Math.random()*innerWidth,
+    y: Math.random()*innerHeight*0.72,
+    r: Math.random()*1.5 + .3,
+    base: Math.random()*.5 + .3,
+    ph: Math.random()*Math.PI*2,
+    sp: Math.random()*1.2 + .3,
+    dx:0, dy:0
+  });
+}
+
+/* ============================================================
+   2. 流星
+   ============================================================ */
+const meteors = [];
+let meteorTimer = 0, nextMeteor = 120;
+
+function spawnMeteor(burst=false){
+  const ang = Math.PI * (0.72 + Math.random()*0.16);
+  const speed = burst ? 14 + Math.random()*8 : 9 + Math.random()*6;
+  meteors.push({
+    x: Math.random()*W*0.9,
+    y: Math.random()*H*0.28,
+    vx: Math.cos(ang)*speed,
+    vy: -Math.sin(ang)*speed,
+    life:1,
+    decay: burst ? 0.008 + Math.random()*0.006 : 0.006 + Math.random()*0.005,
+    len: burst ? 160 + Math.random()*120 : 110 + Math.random()*90,
+    hue: Math.random()<0.25 ? 45 : 210
+  });
+}
+
+/* ============================================================
+   3. 萤火虫
+   ============================================================ */
+const fireflies = [];
+for(let i=0;i<45;i++){
+  fireflies.push({
+    x: Math.random()*innerWidth,
+    y: innerHeight*0.55 + Math.random()*innerHeight*0.45,
+    r: Math.random()*1.8 + .8,
+    ph: Math.random()*Math.PI*2,
+    sp: Math.random()*.8 + .3,
+    vx:(Math.random()-.5)*.3,
+    vy:(Math.random()-.5)*.2
+  });
+}
+
+/* ============================================================
+   4. 点击：许愿粒子 + 诗词浮现
+   ============================================================ */
+const bursts = [];
+const poems = ['p1','p2','p3','p4','p5'].map(id=>document.getElementById(id));
+let poemIndex = 0;
+let currentPoem = null;
+
+function showPoemAt(x, y){
+  if(currentPoem){
+    currentPoem.classList.remove('show');
+    currentPoem.classList.add('hide');
+    setTimeout(()=>currentPoem.classList.remove('hide'), 2500);
+  }
+
+  const poem = poems[poemIndex];
+  poemIndex = (poemIndex + 1) % poems.length;
+
+  const offsetX = (Math.random() - 0.5) * 200;
+  const offsetY = -80 - Math.random() * 80;
+
+  let posX = x + offsetX;
+  let posY = y + offsetY;
+
+  const poemWidth = 60;
+  const poemHeight = 300;
+
+  if(posX < 20) posX = 20;
+  if(posX > W - poemWidth - 20) posX = W - poemWidth - 20;
+  if(posY < 20) posY = 20;
+  if(posY > H - poemHeight - 20) posY = H - poemHeight - 20;
+
+  poem.style.left = posX + 'px';
+  poem.style.top = posY + 'px';
+
+  currentPoem = poem;
+  requestAnimationFrame(() => {
+    poem.classList.add('show');
+  });
+}
+
+cv.addEventListener('pointerdown', e => {
+  const cx = e.clientX, cy = e.clientY;
+
+  const n = 90;
+  for(let i=0;i<n;i++){
+    const a = (i/n)*Math.PI*2 + Math.random()*.3;
+    const sp = 1.5 + Math.random()*4.5;
+    bursts.push({
+      x:cx, y:cy,
+      vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - .6,
+      life:1, decay:.012 + Math.random()*.012,
+      r:1 + Math.random()*2.4,
+      hue: 40 + Math.random()*20
+    });
+  }
+
+  for(let i=0;i<3;i++) setTimeout(()=>spawnMeteor(true), i*180);
+
+  showPoemAt(cx, cy);
+});
+
+/* ============================================================
+   5. 海上波光
+   ============================================================ */
+const waves = [];
+for(let i=0;i<70;i++){
+  waves.push({
+    t: Math.random()*Math.PI*2,
+    x: Math.random(),
+    sp: .004 + Math.random()*.008,
+    y: .60 + Math.random()*.10,
+    len: 20 + Math.random()*60,
+    a: .1 + Math.random()*.35
+  });
+}
+
+/* ============================================================
+   主循环
+   ============================================================ */
+function loop(){
+  ctx.clearRect(0,0,W,H);
+
+  if(mouse.tx > -999){
+    if(mouse.x < -999){ mouse.x = mouse.tx; mouse.y = mouse.ty; }
+    mouse.x += (mouse.tx - mouse.x)*.08;
+    mouse.y += (mouse.ty - mouse.y)*.08;
+  } else { mouse.x = mouse.tx; mouse.y = mouse.ty; }
+
+  for(const s of stars){
+    s.ph += .02*s.sp;
+    const tw = s.base + Math.sin(s.ph)*.35;
+    if(mouse.x > -999){
+      const dx = s.x - mouse.x, dy = s.y - mouse.y;
+      const d = Math.hypot(dx,dy);
+      if(d < 160 && d > 0.1){
+        const f = (1 - d/160) * 14;
+        s.dx += (dx/d)*f*.06;
+        s.dy += (dy/d)*f*.06;
+      }
+    }
+    s.dx *= .9; s.dy *= .9;
+    const px = s.x + s.dx, py = s.y + s.dy;
+    ctx.beginPath();
+    ctx.arc(px, py, s.r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(255,250,235,${Math.max(tw,0)})`;
+    ctx.fill();
+    if(s.r > 1.2 && tw > .6){
+      ctx.strokeStyle = `rgba(255,248,225,${(tw-.6)*.8})`;
+      ctx.lineWidth = .6;
+      const L = s.r*7;
+      ctx.beginPath();
+      ctx.moveTo(px-L,py); ctx.lineTo(px+L,py);
+      ctx.moveTo(px,py-L); ctx.lineTo(px,py+L);
+      ctx.stroke();
+    }
+  }
+
+  ctx.globalCompositeOperation = 'lighter';
+  for(const w of waves){
+    w.t += w.sp;
+    const wx = w.x * W;
+    const wy = w.y * H + Math.sin(w.t)*6;
+    const shimmer = (Math.sin(w.t*2.3)+1)/2;
+    const grad = ctx.createLinearGradient(wx - w.len, wy, wx + w.len, wy);
+    grad.addColorStop(0, 'rgba(255,215,130,0)');
+    grad.addColorStop(.5, `rgba(255,225,150,${w.a*shimmer})`);
+    grad.addColorStop(1, 'rgba(255,215,130,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(wx - w.len, wy, w.len*2, 1.4);
+  }
+
+  for(const f of fireflies){
+    f.ph += .03*f.sp;
+    f.x += f.vx + Math.sin(f.ph*.7)*.3;
+    f.y += f.vy + Math.cos(f.ph*.5)*.2;
+    if(f.x<0) f.x=W; if(f.x>W) f.x=0;
+    if(f.y<H*.5) f.y=H*.5; if(f.y>H) f.y=H*.5;
+    const a = (Math.sin(f.ph)+1)/2 * .7;
+    const g = ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,f.r*5);
+    g.addColorStop(0, `rgba(255,230,150,${a})`);
+    g.addColorStop(1, 'rgba(255,230,150,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(f.x,f.y,f.r*5,0,Math.PI*2); ctx.fill();
+  }
+
+  meteorTimer++;
+  if(meteorTimer > nextMeteor){
+    spawnMeteor(false);
+    meteorTimer = 0;
+    nextMeteor = 200 + Math.random()*300;
+  }
+  for(let i=meteors.length-1;i>=0;i--){
+    const m = meteors[i];
+    m.x += m.vx; m.y += m.vy; m.life -= m.decay;
+    if(m.life<=0 || m.x>W+200 || m.y>H+200){ meteors.splice(i,1); continue; }
+    const tailX = m.x - m.vx/m.len*80*m.life;
+    const tailY = m.y - m.vy/m.len*80*m.life;
+    const grad = ctx.createLinearGradient(m.x,m.y,tailX,tailY);
+    const c = m.hue===45 ? '255,240,200' : '200,225,255';
+    grad.addColorStop(0, `rgba(${c},${m.life})`);
+    grad.addColorStop(1, `rgba(${c},0)`);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 2*m.life + .4;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.lineTo(tailX,tailY); ctx.stroke();
+    const hg = ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,8*m.life);
+    hg.addColorStop(0, `rgba(255,255,255,${m.life})`);
+    hg.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = hg;
+    ctx.beginPath(); ctx.arc(m.x,m.y,8*m.life,0,Math.PI*2); ctx.fill();
+  }
+
+  for(let i=bursts.length-1;i>=0;i--){
+    const b = bursts[i];
+    b.x += b.vx; b.y += b.vy;
+    b.vx *= .96; b.vy = b.vy*.96 + .02;
+    b.life -= b.decay;
+    if(b.life<=0){ bursts.splice(i,1); continue; }
+    ctx.beginPath();
+    ctx.arc(b.x,b.y,b.r*b.life,0,Math.PI*2);
+    ctx.fillStyle = `hsla(${b.hue},90%,72%,${b.life})`;
+    ctx.fill();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+
+  requestAnimationFrame(loop);
+}
+loop();
+
+/* ============================================================
+   音乐系统：HTML5 Audio 播放本地文件
+   ============================================================ */
+const bgm = document.getElementById('bgm');
+const btn = document.getElementById('musicBtn');
+let musicOn = false;
+
+// 音量淡入淡出
+function fadeIn(audio, duration = 2000){
+  audio.volume = 0;
+  audio.play();
+  const step = 0.05;
+  const interval = duration / (1 / step);
+  const timer = setInterval(() => {
+    if(audio.volume < 0.7){
+      audio.volume = Math.min(0.7, audio.volume + step);
+    } else {
+      clearInterval(timer);
+    }
+  }, interval);
+}
+
+function fadeOut(audio, duration = 1500){
+  const step = 0.05;
+  const interval = duration / (audio.volume / step);
+  const timer = setInterval(() => {
+    if(audio.volume > step){
+      audio.volume -= step;
+    } else {
+      audio.volume = 0;
+      audio.pause();
+      clearInterval(timer);
+    }
+  }, interval);
+}
+
+btn.addEventListener('click', (e) => {
+  e.stopPropagation();
+
+  if(musicOn){
+    fadeOut(bgm);
+    musicOn = false;
+    btn.classList.remove('playing');
+    btn.textContent = '♪';
+  } else {
+    fadeIn(bgm);
+    musicOn = true;
+    btn.classList.add('playing');
+    btn.textContent = '♫';
+  }
+});
+
+// 如果音频加载失败，显示提示
+bgm.addEventListener('error', () => {
+  console.warn('音频文件加载失败，请确保 zhongqiu.mp3 位于 /zhongqiu/ 目录');
+  btn.style.opacity = '0.5';
+  btn.title = '音频文件未找到';
+});
+
+/* ============================================================
+   开场遮罩
+   ============================================================ */
+const overlay = document.getElementById('overlay');
+overlay.addEventListener('click', ()=>{
+  overlay.classList.add('hide');
+  for(let i=0;i<6;i++) setTimeout(()=>spawnMeteor(true), 400+i*260);
+}, { once:true });
+</script>
+</body>
+</html>
