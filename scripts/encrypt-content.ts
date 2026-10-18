@@ -57,6 +57,15 @@ function parseFrontmatter(content: string): { data: Record<string, any>; body: s
   return { data: fm, body: match[2] };
 }
 
+/** 日期统一补零为 YYYY-MM-DD，避免列表按字符串排序时 2026-9-11 排在 2026-10-18 之前 */
+function normalizeDate(val: unknown): string {
+  if (!val) return '2026-01-01';
+  const s = String(val).trim();
+  const m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+  return s.slice(0, 10);
+}
+
 function main() {
   // 读取所有 md 文件
   const mdFiles = readdirSync(POSTS_DIR)
@@ -79,7 +88,7 @@ function main() {
     const meta: ArticleMeta = {
       id: slug,
       title: data.title || slug,
-      date: data.date ? String(data.date).slice(0, 10) : '2026-01-01',
+      date: normalizeDate(data.date),
       category: data.category || '未分类',
       description: data.description || '',
       type: data.type || 'article',
@@ -126,8 +135,8 @@ function main() {
 function updateGitignore(protectedArticles: ArticleMeta[]) {
   let content = existsSync(GITIGNORE) ? readFileSync(GITIGNORE, 'utf-8') : '';
 
-  // 移除旧的受保护文章忽略规则
-  content = content.replace(/# 受保护文章源文件\n(.*\n)*/g, '');
+  // 移除旧的受保护文章忽略规则（兼容 CRLF 换行，否则每跑一次都会重复追加）
+  content = content.replace(/# 受保护文章源文件[^\r\n]*\r?\n(?:.*\r?\n)*/g, '').trimEnd();
 
   // 添加新的忽略规则
   if (protectedArticles.length > 0) {
