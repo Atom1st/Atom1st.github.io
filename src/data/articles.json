@@ -9,7 +9,8 @@
     "origin": "original",
     "access": "public",
     "passwordHash": "",
-    "hot": false
+    "hot": false,
+    "pdf": "gaolian3.pdf"
   },
   {
     "id": "liangan",

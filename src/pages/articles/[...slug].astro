@@ -54,6 +54,7 @@ if (isEncrypted) {
     origin: entry.data.origin,
     access: entry.data.access,
     passwordHash: entry.data.password || '',
+    pdf: entry.data.pdf,
   };
   const rendered = await render(entry);
   Content = rendered.Content;
@@ -81,6 +82,17 @@ const encFileUrl = `/encrypted/${articleMeta.id}.json`;
     {isProtected && (
       <div class="notice protected">
         <i class="fas fa-lock"></i> 本文为受保护内容
+      </div>
+    )}
+
+    {!isProtected && articleMeta.pdf && (
+      <div class="pdf-actions">
+        <a class="btn" href={`/pdf/${articleMeta.pdf}`} target="_blank" rel="noopener">
+          <i class="fas fa-eye"></i> 在线预览
+        </a>
+        <a class="btn btn-outline" href={`/pdf/${articleMeta.pdf}`} download>
+          <i class="fas fa-download"></i> 下载 PDF
+        </a>
       </div>
     )}
 
@@ -114,6 +126,8 @@ const encFileUrl = `/encrypted/${articleMeta.id}.json`;
 
   {isProtected && (
     <script is:inline src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script is:inline src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script is:inline src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
     <script is:inline>
       (function() {
         const prompt = document.getElementById('passwordPrompt');
@@ -186,6 +200,19 @@ const encFileUrl = `/encrypted/${articleMeta.id}.json`;
             // 渲染 markdown
             const html = marked.parse(plaintext);
             contentEl.innerHTML = html;
+
+            // 渲染 LaTeX 公式（支持 \(..\) \[..] $..$ $$..$$）
+            if (window.renderMathInElement) {
+              renderMathInElement(contentEl, {
+                delimiters: [
+                  { left: '\\[', right: '\\]', display: true },
+                  { left: '\\(', right: '\\)', display: false },
+                  { left: '$$', right: '$$', display: true },
+                  { left: '$', right: '$', display: false },
+                ],
+                throwOnError: false,
+              });
+            }
 
             // 显示内容
             prompt.style.display = 'none';

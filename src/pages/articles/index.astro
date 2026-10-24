@@ -39,6 +39,7 @@ const articles = (articlesData as any[])
               <i class="fas fa-share mark repost" title="搬运"></i>
             )}
             {e.access === 'protected' && <i class="fas fa-lock mark lock" title="加密"></i>}
+            {e.pdf && <i class="fas fa-file-pdf mark pdf" title="含 PDF"></i>}
           </h3>
           {e.description && <p>{e.description}</p>}
           <div class="meta">

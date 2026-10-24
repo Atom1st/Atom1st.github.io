@@ -29,6 +29,7 @@ interface ArticleMeta {
   access: string;
   passwordHash: string;
   hot: boolean;
+  pdf?: string;
 }
 
 function parseFrontmatter(content: string): { data: Record<string, any>; body: string } {
@@ -97,6 +98,7 @@ function main() {
       passwordHash: '',
       hot: data.hot === true,
     };
+    if (data.pdf) meta.pdf = String(data.pdf);
 
     // 加密受保护文章
     if (data.access === 'protected' && data.password) {

@@ -16,6 +16,7 @@ const fmt = entry.data.date.toISOString().slice(0, 10);
       <i class="fas fa-share mark repost" title="搬运"></i>
     )}
     {entry.data.access === 'protected' && <i class="fas fa-lock mark lock" title="加密"></i>}
+    {entry.data.pdf && <i class="fas fa-file-pdf mark pdf" title="含 PDF"></i>}
   </h3>
   {entry.data.description && <p>{entry.data.description}</p>}
   <div class="meta">
