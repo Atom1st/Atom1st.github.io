@@ -74,6 +74,8 @@ function main() {
     .map(f => join(POSTS_DIR, f));
 
   const allMeta: ArticleMeta[] = [];
+  /** 所有 access: protected 的文件名（用于 .gitignore，与是否成功加密无关） */
+  const protectedIds: string[] = [];
   let protectedCount = 0;
 
   // 确保 encrypted 目录存在
@@ -100,6 +102,8 @@ function main() {
     };
     if (data.pdf) meta.pdf = String(data.pdf);
 
+    if (data.access === 'protected') protectedIds.push(slug);
+
     // 加密受保护文章
     if (data.access === 'protected' && data.password) {
       const password = String(data.password);
@@ -110,6 +114,11 @@ function main() {
       writeFileSync(encPath, JSON.stringify(encrypted, null, 2), 'utf-8');
       protectedCount++;
       console.log(`  ✓ 已加密: ${slug} → public/encrypted/${slug}.json`);
+    } else if (data.access === 'protected') {
+      // 标了 protected 却没写密码：正文加密不了，源文件也不会提交，
+      // 若仍写进索引就会在线上变成死链，所以直接排除。
+      console.warn(`  ! 跳过: ${slug} 标记 protected 但缺少 password，未写入文章索引`);
+      continue;
     }
 
     allMeta.push(meta);
@@ -128,21 +137,21 @@ function main() {
   writeFileSync(METADATA_FILE, JSON.stringify(allMeta, null, 2), 'utf-8');
   console.log(`\n  ✓ 元数据已写入: src/data/articles.json (${allMeta.length} 篇文章)`);
 
-  // 更新 .gitignore
-  updateGitignore(allMeta.filter(m => m.access === 'protected'));
+  // 更新 .gitignore（用 protectedIds 而不是 allMeta：被跳过的受保护文章同样不能提交明文）
+  updateGitignore(protectedIds);
 
   console.log(`  ✓ 加密完成: ${protectedCount} 篇受保护文章`);
 }
 
-function updateGitignore(protectedArticles: ArticleMeta[]) {
+function updateGitignore(protectedIds: string[]) {
   let content = existsSync(GITIGNORE) ? readFileSync(GITIGNORE, 'utf-8') : '';
 
   // 移除旧的受保护文章忽略规则（兼容 CRLF 换行，否则每跑一次都会重复追加）
   content = content.replace(/# 受保护文章源文件[^\r\n]*\r?\n(?:.*\r?\n)*/g, '').trimEnd();
 
   // 添加新的忽略规则
-  if (protectedArticles.length > 0) {
-    const patterns = protectedArticles.map(m => `src/content/posts/${m.id}.md`).join('\n');
+  if (protectedIds.length > 0) {
+    const patterns = protectedIds.map(id => `src/content/posts/${id}.md`).join('\n');
     content = content.trimEnd() + `\n\n# 受保护文章源文件（构建时加密，不提交明文）\n${patterns}\n`;
   }
 

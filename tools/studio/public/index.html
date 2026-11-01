@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Studio · 写作工作台</title>
+<link rel="stylesheet" href="/vendor/dist/index.css" />
+<link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ═════════ 左：文章列表 ═════════ -->
+  <aside class="rail">
+    <div class="rail-head">
+      <div class="brand">
+        <span class="brand-main">STUDIO</span>
+        <span class="brand-sub">本地写作工作台</span>
+      </div>
+      <button class="icon-btn" id="btnTheme" title="切换明暗主题">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><circle cx="12" cy="12" r="4.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+      </button>
+    </div>
+
+    <div class="rail-search">
+      <input id="search" type="text" placeholder="搜索标题 / 正文 / 文件名" autocomplete="off" />
+      <button class="icon-btn ghost" id="btnClearSearch" title="清空">✕</button>
+    </div>
+
+    <div class="chips" id="catChips"></div>
+
+    <div class="rail-count"><span id="listCount">0 篇</span><span id="listFilter"></span></div>
+
+    <ul class="post-list" id="postList"></ul>
+
+    <div class="rail-foot">
+      <button class="btn btn-accent block" id="btnNew">＋ 新建文章</button>
+    </div>
+  </aside>
+
+  <!-- ═════════ 中：编辑器 ═════════ -->
+  <main class="work">
+    <header class="topbar">
+      <div class="title-wrap">
+        <input id="title" class="title-input" placeholder="未命名文章" spellcheck="false" />
+        <div class="title-meta" id="titleMeta"></div>
+      </div>
+      <div class="topbar-actions">
+        <span class="save-state" id="saveState">未修改</span>
+        <button class="btn" id="btnPreview" title="启动 astro dev 本地预览">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M3 12s3.6-6.5 9-6.5S21 12 21 12s-3.6 6.5-9 6.5S3 12 3 12z"/><circle cx="12" cy="12" r="2.4"/></svg>
+          预览
+        </button>
+        <button class="btn" id="btnSave" title="保存 (Ctrl+S)">保存</button>
+        <button class="btn btn-accent" id="btnPublish" title="保存 → 生成索引 → 构建 → 提交推送">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M4 13v6h16v-6"/><path d="M12 4v10M8 8l4-4 4 4"/></svg>
+          一键发布
+        </button>
+      </div>
+    </header>
+
+    <div class="editor-host">
+      <div id="vditor" class="vditor-host"></div>
+      <div class="empty" id="empty">
+        <div class="empty-inner">
+          <div class="empty-mark">STUDIO</div>
+          <p>左侧选择一篇文章，或新建一篇开始写。</p>
+          <button class="btn btn-accent" id="btnNewEmpty">＋ 新建文章</button>
+        </div>
+      </div>
+    </div>
+
+    <section class="log-drawer" id="logDrawer" hidden>
+      <div class="log-head">
+        <span class="log-title" id="logTitle">任务日志</span>
+        <div class="log-actions">
+          <button class="icon-btn ghost" id="btnLogCopy" title="复制日志">复制</button>
+          <button class="icon-btn ghost" id="btnLogClose" title="收起">收起</button>
+        </div>
+      </div>
+      <pre class="log-body" id="logBody"></pre>
+    </section>
+
+    <footer class="statusbar">
+      <span id="statFile" class="mono">—</span>
+      <span class="sep"></span>
+      <span id="statWords">0 字</span>
+      <span class="sep"></span>
+      <span id="statSaved">已保存</span>
+      <span class="grow"></span>
+      <span id="statEnv" class="mono"></span>
+    </footer>
+  </main>
+
+  <!-- ═════════ 右：属性 / 发布 ═════════ -->
+  <aside class="inspector" id="inspector">
+    <div class="insp-tabs">
+      <button class="insp-tab active" data-tab="meta">属性</button>
+      <button class="insp-tab" data-tab="ship">发布</button>
+      <button class="insp-tab" data-tab="help">帮助</button>
+    </div>
+
+    <div class="insp-body">
+
+      <!-- 属性 -->
+      <div class="insp-pane active" data-pane="meta">
+        <div class="field">
+          <label>文件名 / slug</label>
+          <div class="field-row">
+            <input id="fSlug" class="mono" spellcheck="false" placeholder="my-post" />
+            <button class="btn btn-sm" id="btnRename" title="重命名文件">改名</button>
+          </div>
+          <p class="hint">线上地址：<span id="urlPreview" class="mono">/articles/…</span></p>
+        </div>
+
+        <div class="field">
+          <label>日期</label>
+          <div class="field-row">
+            <input id="fDate" type="date" />
+            <button class="btn btn-sm" id="btnToday" title="设为今天">今天</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>分类</label>
+          <div class="seg" id="fCategory"></div>
+        </div>
+
+        <div class="field">
+          <label>类型</label>
+          <div class="seg" id="fType"></div>
+        </div>
+
+        <div class="field">
+          <label>来源</label>
+          <div class="seg" id="fOrigin"></div>
+        </div>
+
+        <div class="field">
+          <label>访问权限</label>
+          <div class="seg" id="fAccess"></div>
+        </div>
+
+        <div class="field" id="pwdField" hidden>
+          <label>访问密码</label>
+          <input id="fPassword" type="text" class="mono" placeholder="设置后正文会加密发布" />
+          <p class="hint">密码以明文写在本地 md 里（该文件已被 gitignore），发布时加密正文。</p>
+        </div>
+
+        <div class="field">
+          <label>摘要</label>
+          <textarea id="fDescription" rows="3" placeholder="列表页显示的一句话描述"></textarea>
+        </div>
+
+        <div class="field">
+          <label>PDF 文件名（可选）</label>
+          <input id="fPdf" class="mono" placeholder="gaolian3.pdf" />
+        </div>
+
+        <label class="check"><input type="checkbox" id="fHot" /> 标记为热门资源</label>
+
+        <div class="insp-actions">
+          <button class="btn btn-sm" id="btnReveal">打开目录</button>
+          <button class="btn btn-sm" id="btnDuplicate">复制一份</button>
+          <button class="btn btn-sm btn-danger" id="btnDelete">删除</button>
+        </div>
+      </div>
+
+      <!-- 发布 -->
+      <div class="insp-pane" data-pane="ship">
+        <div class="field">
+          <label>提交信息</label>
+          <input id="fCommit" placeholder="post: 更新文章" />
+          <p class="hint">留空则使用 <span class="mono">post: 更新文章</span></p>
+        </div>
+
+        <label class="check"><input type="checkbox" id="cAutoBuild" checked /> 发布前构建（astro build）</label>
+        <label class="check"><input type="checkbox" id="cAutoEncrypt" checked /> 发布前生成索引 / 加密</label>
+
+        <button class="btn btn-accent block" id="btnPublish2">一键发布</button>
+        <p class="hint">流程：保存 → 生成 articles.json + 加密 → 构建 → git add / commit / push</p>
+
+        <div class="divider"></div>
+
+        <div class="btn-grid">
+          <button class="btn btn-sm" data-run="encrypt">生成索引</button>
+          <button class="btn btn-sm" data-run="build">构建</button>
+          <button class="btn btn-sm" data-run="git-status">git 状态</button>
+          <button class="btn btn-sm" data-run="git-log">git 日志</button>
+          <button class="btn btn-sm" data-run="git-pull">git pull</button>
+          <button class="btn btn-sm" id="btnOpenSite">打开线上站</button>
+        </div>
+
+        <div class="divider"></div>
+        <div class="kv">
+          <div><span>分支</span><b id="kBranch" class="mono">—</b></div>
+          <div><span>加密文章</span><b id="kProtected" class="mono">—</b></div>
+          <div><span>构建工具</span><b id="kRuntime" class="mono">—</b></div>
+        </div>
+      </div>
+
+      <!-- 帮助 -->
+      <div class="insp-pane" data-pane="help">
+        <div class="help-block">
+          <h4>快捷键</h4>
+          <ul>
+            <li><kbd>Ctrl</kbd>+<kbd>S</kbd> 保存</li>
+            <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> 一键发布</li>
+            <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> 新建文章</li>
+            <li><kbd>Ctrl</kbd>+<kbd>K</kbd> 聚焦搜索</li>
+          </ul>
+        </div>
+        <div class="help-block">
+          <h4>写作用法</h4>
+          <ul>
+            <li>正文即 <span class="mono">src/content/posts/*.md</span> 的 body，直接写 Markdown。</li>
+            <li>数学公式用 <span class="mono">$…$</span>、<span class="mono">$$…$$</span> 或 <span class="mono">\(…\)</span>、<span class="mono">\[…]</span>。</li>
+            <li>图片可直接拖进编辑器，自动存到 <span class="mono">public/uploads/</span>。</li>
+          </ul>
+        </div>
+        <div class="help-block">
+          <h4>发布做了什么</h4>
+          <ol>
+            <li>保存当前 md</li>
+            <li>运行 encrypt 脚本，重新生成 <span class="mono">src/data/articles.json</span>，并加密受保护文章</li>
+            <li>astro build 验证站点能编译</li>
+            <li>git add / commit / push，GitHub Actions 自动部署</li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+</div>
+
+<!-- 新建文章弹窗 -->
+<div class="modal-mask" id="newMask" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <h3>新建文章</h3>
+      <button class="icon-btn ghost" id="btnNewClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>标题</label>
+        <input id="nTitle" placeholder="文章标题" />
+      </div>
+      <div class="field">
+        <label>文件名 / slug</label>
+        <input id="nSlug" class="mono" placeholder="自动根据标题生成，可修改" />
+        <p class="hint">只能用字母、数字、下划线、连字符、点；线上路径 /articles/&lt;slug&gt;</p>
+      </div>
+      <div class="field">
+        <label>分类</label>
+        <div class="seg" id="nCategory"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="btnNewCancel">取消</button>
+      <button class="btn btn-accent" id="btnNewCreate">创建</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="/vendor/dist/index.min.js"></script>
+<script src="/math-adapter.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>
