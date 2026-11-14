@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>两数相加</title>
+<link rel="stylesheet" href="ccs.css">
+</head>
+<body>
+
+<div class="page container container-narrow">
+
+  <div class="page-head">
+    <span class="eyebrow">CCS Example</span>
+    <h1 class="page-title">两数相加</h1>
+    <p class="page-sub">输入两个数，点提交查看结果。</p>
+  </div>
+
+  <!-- 原代码缺 <form>：没有它，回车不会触发提交，也无法统一校验与重置 -->
+  <form id="calcForm" novalidate>
+    <div class="form-grid">
+
+      <div class="field">
+        <label class="label" for="num1">第一个数<span class="req">*</span></label>
+        <input id="num1" name="first" type="number" inputmode="decimal" step="any"
+               placeholder="例如 12" autocomplete="off" autofocus>
+        <span class="field-error is-hidden" id="err1">请输入一个数字。</span>
+      </div>
+
+      <div class="field">
+        <label class="label" for="num2">第二个数<span class="req">*</span></label>
+        <input id="num2" name="second" type="number" inputmode="decimal" step="any"
+               placeholder="例如 30" autocomplete="off">
+        <span class="field-error is-hidden" id="err2">请输入一个数字。</span>
+      </div>
+
+      <!-- 原代码用 <input type="submit">：样式难统一、无法放图标。改用 <button type="submit"> -->
+      <div class="form-actions full">
+        <button class="btn" type="submit" id="sub" name="mit" value="提交">
+          <i aria-hidden="true">＝</i> 计算
+        </button>
+        <button class="btn btn-secondary" type="reset">重置</button>
+      </div>
+
+    </div>
+  </form>
+
+  <!-- 结果区：aria-live 让读屏软件自动播报 -->
+  <div class="notice mt-6 is-hidden" id="result" role="status" aria-live="polite"></div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var form = document.getElementById('calcForm');
+  var n1 = document.getElementById('num1');
+  var n2 = document.getElementById('num2');
+  var e1 = document.getElementById('err1');
+  var e2 = document.getElementById('err2');
+  var box = document.getElementById('result');
+
+  function isNum(v) {
+    return v.trim() !== '' && Number.isFinite(Number(v));
+  }
+
+  function check(input, errEl) {
+    var ok = isNum(input.value);
+    input.classList.toggle('is-invalid', !ok);
+    input.classList.toggle('is-valid', ok);
+    errEl.classList.toggle('is-hidden', ok);
+    return ok;
+  }
+
+  /* 按最大小数位放大成整数再相加，避免 0.1 + 0.2 = 0.30000000000000004 */
+  function decimals(v) {
+    var t = String(v).trim();
+    var i = t.indexOf('.');
+    return i === -1 ? 0 : t.length - i - 1;
+  }
+  function addDecimals(a, b) {
+    var d = Math.min(Math.max(decimals(a), decimals(b)), 10);
+    var scale = Math.pow(10, d);
+    return (Math.round(Number(a) * scale) + Math.round(Number(b) * scale)) / scale;
+  }
+
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+
+    var ok1 = check(n1, e1);
+    var ok2 = check(n2, e2);
+
+    if (!ok1 || !ok2) {
+      box.className = 'notice notice-danger mt-6';
+      box.textContent = '请先填写两个有效数字。';
+      (ok1 ? n2 : n1).focus();
+      return;
+    }
+
+    var sum = addDecimals(n1.value, n2.value);
+
+    box.className = 'notice notice-success mt-6';
+    box.textContent = n1.value.trim() + ' + ' + n2.value.trim() + ' = ' + sum;
+  });
+
+  // 输入时清掉错误，避免用户改好了提示还挂着
+  [[n1, e1], [n2, e2]].forEach(function (pair) {
+    pair[0].addEventListener('input', function () {
+      if (pair[0].value.trim() !== '') {
+        pair[0].classList.remove('is-invalid');
+        pair[1].classList.add('is-hidden');
+      }
+    });
+  });
+
+  form.addEventListener('reset', function () {
+    [n1, n2].forEach(function (input) {
+      input.classList.remove('is-invalid', 'is-valid');
+    });
+    e1.classList.add('is-hidden');
+    e2.classList.add('is-hidden');
+    box.className = 'notice mt-6 is-hidden';
+    n1.focus();
+  });
+})();
+</script>
+</body>
+</html>

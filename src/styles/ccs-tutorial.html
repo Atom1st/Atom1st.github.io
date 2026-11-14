@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CCS 交互式教程</title>
+<link rel="stylesheet" href="ccs.css">
+<style>
+  /* ============ 教程自身的少量补丁（不改 ccs.css） ============ */
+  body { background: var(--paper); }
+
+  .tut-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+    height: 58px;
+    padding: 0 var(--sp-5);
+    background: var(--paper);
+    border-bottom: var(--border-w) solid var(--border);
+  }
+  .tut-header .brand { font-size: var(--fs-md); font-weight: 800; letter-spacing: .5px; }
+  .tut-header .brand .dot { color: var(--accent); }
+
+  .tut-progress {
+    position: absolute;
+    left: 0; bottom: -1px;
+    height: 2px;
+    width: 0;
+    background: var(--accent);
+    transition: width var(--t-base);
+  }
+
+  /* 布局：左章节导航（宽） + 右正文 */
+  .tut-body { display: flex; align-items: flex-start; }
+
+  .tut-side {
+    position: sticky;
+    top: 58px;
+    flex: 0 0 232px;
+    height: calc(100vh - 58px);
+    overflow-y: auto;
+    background: var(--paper);
+    border-right: var(--border-w) solid var(--border);
+    padding-bottom: var(--sp-8);
+  }
+  .tut-side .side-nav a { font-size: var(--fs-sm); padding: var(--sp-2) var(--sp-4) var(--sp-2) var(--sp-5); gap: var(--sp-2); }
+  .tut-side .side-nav a .num {
+    flex: none;
+    width: 18px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--faint);
+    font-weight: 700;
+  }
+  .tut-side .side-nav a.is-active .num { color: var(--accent); }
+
+  .tut-main { flex: 1 1 auto; min-width: 0; padding: var(--sp-8) var(--sp-8) var(--sp-16); max-width: 980px; }
+
+  /* 章节 */
+  .lesson { margin-bottom: var(--sp-16); scroll-margin-top: 76px; }
+  .lesson-head { display: flex; align-items: baseline; gap: var(--sp-3); margin-bottom: var(--sp-2); }
+  .lesson-num {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 1px 8px;
+  }
+  .lesson h2 { margin: 0; font-size: var(--fs-h2); padding-bottom: 0; border: 0; }
+  .lesson-intro { color: var(--muted); margin: var(--sp-2) 0 var(--sp-5); max-width: 62ch; }
+
+  /* 演示台 */
+  .stage {
+    position: relative;
+    margin-top: var(--sp-6);
+    background: var(--bg);
+    border: var(--border-w) solid var(--border);
+    border-left: var(--bar) solid var(--accent);
+    overflow-x: auto;
+  }
+  .stage-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-4);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--faint);
+    background: var(--paper-alt);
+    border-bottom: var(--border-w) solid var(--border-weak);
+  }
+  .stage-body { padding: var(--sp-6); }
+  .stage-bar .live-dot {
+    width: 6px; height: 6px;
+    background: var(--success);
+  }
+
+  /* 代码块 + 复制 */
+  .snippet { position: relative; margin: 0; border-left-width: 4px; }
+  .snippet .copy-btn { position: absolute; top: 8px; right: 8px; opacity: 0; }
+  .snippet:hover .copy-btn { opacity: 1; }
+  .snippet code { font-size: 13px; line-height: 1.7; }
+
+  /* 控件面板 */
+  .knobs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3) var(--sp-5);
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--paper-alt);
+    border: var(--border-w) solid var(--border);
+    border-top: 0;
+    font-size: var(--fs-sm);
+  }
+  .knob { display: inline-flex; align-items: center; gap: var(--sp-2); }
+  .knob > span.k { color: var(--muted); font-weight: 600; }
+  .knob select { width: auto; padding: 3px 26px 3px 8px; font-size: var(--fs-sm); background-position: calc(100% - 13px) calc(50% - 2px), calc(100% - 8px) calc(50% - 2px); }
+  .knob input[type="range"] { width: 110px; }
+  .knob .val { font-family: var(--font-mono); color: var(--accent); min-width: 44px; }
+
+  /* 每节末尾的「试一试」 */
+  .try {
+    display: flex;
+    gap: var(--sp-3);
+    margin-top: var(--sp-4);
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    font-size: var(--fs-sm);
+    color: var(--text-2);
+  }
+  .try b { color: var(--accent-strong); flex: none; }
+
+  /* 首页 */
+  .hero { padding: var(--sp-4) 0 var(--sp-8); }
+  .hero h1 { font-size: var(--fs-display); line-height: 1.15; letter-spacing: -.8px; margin-bottom: var(--sp-3); }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero p { max-width: 60ch; color: var(--muted); font-size: var(--fs-md); }
+
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: var(--sp-3); }
+  .toc-item {
+    display: block;
+    padding: var(--sp-4);
+    background: var(--paper);
+    border: var(--border-w) solid var(--border);
+    border-left: 3px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+    transition: border-color var(--t-fast), background var(--t-fast);
+  }
+  .toc-item:hover { border-left-color: var(--accent); background: var(--paper-alt); text-decoration: none; }
+  .toc-item .n { font-family: var(--font-mono); font-size: 11px; color: var(--faint); font-weight: 700; display: block; margin-bottom: 2px; }
+  .toc-item .t { font-weight: 700; font-size: var(--fs-sm); color: var(--text); display: block; }
+  .toc-item:hover .t { color: var(--accent); }
+
+  /* 底部上/下一节 */
+  .lesson-nav { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); margin-top: var(--sp-8); }
+  .lesson-nav a {
+    padding: var(--sp-3) var(--sp-4);
+    border: var(--border-w) solid var(--border);
+    background: var(--paper);
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 700;
+    font-size: var(--fs-sm);
+  }
+  .lesson-nav a:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+  .lesson-nav .dir { display: block; font-size: 11px; color: var(--faint); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+  .lesson-nav .next { text-align: right; }
+
+  /* 章节完成勾选 */
+  .done-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--muted); cursor: pointer; user-select: none; }
+  .done-toggle input { width: 15px; height: 15px; accent-color: var(--success); margin: 0; }
+
+  @media (max-width: 880px) {
+    .tut-side {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      height: 100vh;
+      width: 250px;
+      z-index: calc(var(--z-overlay) + 1);
+      transform: translateX(-100%);
+      transition: transform var(--t-base);
+    }
+    .tut-side.is-open { transform: translateX(0); }
+    .tut-main { padding: var(--sp-5) var(--sp-4) var(--sp-12); }
+    .hero h1 { font-size: var(--fs-h1); }
+    .lesson-nav { grid-template-columns: 1fr; }
+    .lesson-nav .next { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= 顶栏 ================= -->
+<header class="tut-header">
+  <button class="menu-toggle" id="menuToggle" aria-label="目录">☰</button>
+  <span class="brand">CCS<span class="dot">·</span>交互教程</span>
+  <span class="spacer"></span>
+  <span class="text-xs text-muted" id="progressLabel">0 / 13</span>
+  <button class="theme-toggle" id="themeToggle" aria-label="切换主题" title="切换明暗">◐</button>
+  <div class="tut-progress" id="progressBar"></div>
+</header>
+
+<div class="tut-body">
+
+  <!-- ================= 左侧目录 ================= -->
+  <aside class="tut-side" id="side">
+    <nav class="side-nav" id="tutNav">
+      <div class="nav-title">课程</div>
+      <a href="#intro" class="is-active"><span class="num">00</span>开始</a>
+      <a href="#tokens"><span class="num">01</span>设计令牌</a>
+      <a href="#type"><span class="num">02</span>排版</a>
+      <a href="#layout"><span class="num">03</span>布局与栅格</a>
+      <a href="#buttons"><span class="num">04</span>按钮</a>
+      <a href="#cards"><span class="num">05</span>卡片</a>
+      <a href="#colors"><span class="num">06</span>分类色</a>
+      <a href="#forms"><span class="num">07</span>表单</a>
+      <a href="#tables"><span class="num">08</span>表格</a>
+      <a href="#navs"><span class="num">09</span>导航组件</a>
+      <a href="#feedback"><span class="num">10</span>提示与浮层</a>
+      <a href="#article"><span class="num">11</span>文章正文</a>
+      <a href="#recipe"><span class="num">12</span>实战配方</a>
+      <a href="#bare"><span class="num">13</span>零类名兜底</a>
+    </nav>
+  </aside>
+  <div class="overlay" id="ov"></div>
+
+  <!-- ================= 正文 ================= -->
+  <main class="tut-main">
+
+    <!-- 00 开始 -->
+    <section class="lesson" id="intro">
+      <div class="hero">
+        <span class="eyebrow">Interactive Course · 13 Lessons</span>
+        <h1>学会 <em>CCS</em>，<br>写 HTML 不用再摸 CSS。</h1>
+        <p>本页就是用它自己写成的。每一节都有一块<strong>真实运行的演示区</strong>、可以直接复制的代码，以及几个可以拖动、切换的旋钮——改一下，看它怎么变。</p>
+      </div>
+
+      <div class="notice mb-6">
+        <strong>怎么用：</strong>左边选章节 → 读一段说明 → 在上面的演示台里动手 → 点代码块右上角的「复制」贴进自己的页面。
+      </div>
+
+      <div class="toc-grid mb-8">
+        <a class="toc-item" href="#tokens"><span class="n">01</span><span class="t">设计令牌</span></a>
+        <a class="toc-item" href="#type"><span class="n">02</span><span class="t">排版</span></a>
+        <a class="toc-item" href="#layout"><span class="n">03</span><span class="t">布局与栅格</span></a>
+        <a class="toc-item" href="#buttons"><span class="n">04</span><span class="t">按钮</span></a>
+        <a class="toc-item" href="#cards"><span class="n">05</span><span class="t">卡片</span></a>
+        <a class="toc-item" href="#colors"><span class="n">06</span><span class="t">分类色</span></a>
+        <a class="toc-item" href="#forms"><span class="n">07</span><span class="t">表单</span></a>
+        <a class="toc-item" href="#tables"><span class="n">08</span><span class="t">表格</span></a>
+        <a class="toc-item" href="#navs"><span class="n">09</span><span class="t">导航组件</span></a>
+        <a class="toc-item" href="#feedback"><span class="n">10</span><span class="t">提示与浮层</span></a>
+        <a class="toc-item" href="#article"><span class="n">11</span><span class="t">文章正文</span></a>
+        <a class="toc-item" href="#recipe"><span class="n">12</span><span class="t">实战配方</span></a>
+        <a class="toc-item" href="#bare"><span class="n">13</span><span class="t">零类名兜底</span></a>
+      </div>
+
+      <h3>一个页面最少要写的</h3>
+      <pre class="snippet"><code>&lt;link rel="stylesheet" href="ccs.css"&gt;
+
+&lt;div class="page container"&gt;
+  &lt;h1 class="page-title"&gt;标题&lt;/h1&gt;
+  &lt;button class="btn"&gt;主按钮&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+
+      <div class="try"><b>试一试 →</b><span>点顶栏右上的 ◐ 切换明暗。整套控件都跟随主题，无需改一行 CSS。</span></div>
+    </section>
+
+    <!-- 01 设计令牌 -->
+    <section class="lesson" id="tokens">
+      <div class="lesson-head"><span class="lesson-num">01</span><h2>设计令牌</h2></div>
+      <p class="lesson-intro">所有颜色、间距、圆角都写在 <code>:root</code> 的变量里。想换皮肤，改变量即可——下面四个旋钮真的会改变整页的主色。</p>
+
+      <div class="stage">
+        <div class="stage-bar"><span class="live-dot"></span>实时演示</div>
+        <div class="stage-body">
+        <div class="card" id="tokenCard" style="margin:0">
+          <h3 class="card-title">这是一张卡片</h3>
+          <p class="card-text">左色条、徽章、按钮都吃 <code>--accent</code> 这一个变量。</p>
+          <div class="card-meta">
+            <span class="chip" id="tokenChip">chip</span>
+            <span class="badge" id="tokenBadge">badge</span>
+          </div>
+          <div class="inline mt-4">
+            <button class="btn" id="tokenBtn">主按钮</button>
+            <button class="btn btn-outline" id="tokenOutline">描边</button>
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <div class="knobs">
+        <label class="knob"><span class="k">主色</span>
+          <select id="kAccent">
+            <option value="#0969DA">蓝 #0969DA</option>
+            <option value="#1A7F37">绿 #1A7F37</option>
+            <option value="#8250DF">紫 #8250DF</option>
+            <option value="#BC4C00">橙 #BC4C00</option>
+            <option value="#CF222E">红 #CF222E</option>
+          </select>
+        </label>
+        <label class="knob"><span class="k">圆角</span>
+          <input type="range" id="kRadius" min="0" max="12" value="2">
+          <span class="val" id="kRadiusVal">2px</span>
+        </label>
+        <label class="knob"><span class="k">左色条</span>
+          <input type="range" id="kBar" min="0" max="12" value="4">
+          <span class="val" id="kBarVal">4px</span>
+        </label>
+        <button class="btn btn-secondary btn-sm" id="kReset">还原默认</button>
+      </div>
+
+      <pre class="snippet mt-4"><code>/* 换主色：只覆盖变量，不动任何组件规则 */
+:root {
+  --accent: #1A7F37;
+  --accent-strong: #116329;
+  --accent-soft: rgba(26, 127, 55, .10);
+  --accent-line: rgba(26, 127, 55, .35);
+}
+
+/* 想更硬朗 / 更柔和，也只是一个变量 */
+:root { --radius-sm: 0px; --bar: 6px; }</code></pre>
+
+      <div class="try"><b>试一试 →</b><span>把圆角拖到 12px，你会发现整套设计开始「松」掉——这正是直角 2px 是刻意选择的原因。</span></div>
+    </section>
+
+    <!-- 02 排版 -->
+    <section class="lesson" id="type">
+      <div class="lesson-head"><span class="lesson-num">02</span><h2>排版</h2></div>
+      <p class="lesson-intro">直接用语义标签就够，不用加类。下面的内容全部是裸 <code>h1~h6</code>、<code>p</code>、<code>blockquote</code>、<code>pre</code>。</p>
+
+      <div class="stage">
+        <div class="stage-bar"><span class="live-dot"></span>实时演示</div>
+        <div class="stage-body">
+        <h1 style="font-size:30px">一级标题 30px / 800</h1>
+        <h2 style="border:0">二级标题 24px</h2>
+        <h3>三级标题 20px</h3>
+        <p>正文段落，包含 <a href="#">链接</a>、<strong>加粗</strong>、<em>斜体</em>、<code>行内代码</code>、<kbd>Ctrl</kbd>+<kbd>S</kbd>、<mark>高亮</mark> 与 <del>删除线</del>。</p>
+        <blockquote>引用段落用 4px 左色条标记。<cite>某本书</cite></blockquote>
+        <hr>
+        <ul class="list-check"><li>勾选列表用方块，不用圆形</li><li>与全站直角语言一致</li></ul>
+        </div>
+      </div>
+
+      <pre class="snippet mt-4"><code>&lt;h1&gt;一级标题&lt;/h1&gt;
+&lt;p&gt;正文 &lt;a href="#"&gt;链接&lt;/a&gt; &lt;code&gt;代码&lt;/code&gt; &lt;kbd&gt;Ctrl&lt;/kbd&gt;&lt;/p&gt;
+&lt;blockquote&gt;引用&lt;cite&gt;出处&lt;/cite&gt;&lt;/blockquote&gt;
+&lt;ul class="list-check"&gt;&lt;li&gt;方块勾选&lt;/li&gt;&lt;/ul&gt;</code></pre>
+
+      <div class="try"><b>试一试 →</b><span>正文行高是 1.85（<code>.article-body</code> 内）或 1.7（全局），这是为中文长文调过的，不建议改小。</span></div>
+    </section>
+
+    <!-- 03 布局 -->
+    <section class="lesson" id="layout">
+      <div class="lesson-head"><span class="lesson-num">03</span><h2>布局与栅格</h2></div>
+      <p class="lesson-intro">三件套：<code>.container</code> 控宽、<code>.grid</code> 排列、<code>.page</code> 给呼吸感。切换下面的列数，看它实时重排。</p>
+
+      <div class="stage">
+        <div class="stage-bar"><span class="live-dot"></span>实时演示</div>
+        <div class="stage-body">
+        <div class="grid" id="gridDemo">
+          <div class="card card-plain" style="padding:12px 14px"><span class="text-sm">格子 1</span></div>
+          <div class="card card-plain" style="padding:12px 14px"><span class="text-sm">格子 2</span></div>
+          <div class="card card-plain" style="padding:12px 14px"><span class="text-sm">格子 3</span></div>
+          <div class="card card-plain" style="padding:12px 14px"><span class="text-sm">格子 4</span></div>
+        </div>
+        </div>
+      </div>
+
+      <div class="knobs">
+        <label class="knob"><span class="k">列数</span>
+          <select id="kCols">
+            <option value="grid-2">2 列</option>
+            <option value="grid-3" selected>3 列</option>
+            <option value="grid-4">4 列</option>
+            <option value="grid-auto">自适应 240px</option>
+          </select>
+        </label>
+        <label class="knob"><span class="k">间距</span>
+          <input type="range" id="kGap" min="0" max="40" value="20">
+          <span class="val" id="kGapVal">20px</span>
+        </label>
+      </div>
+
+      <pre class="snippet mt-4"><code>&lt;div class="page container"&gt;
+  &lt;div class="grid grid-3"&gt;
+    &lt;div class="card"&gt;…&lt;/div&gt;
+    &lt;div class="card"&gt;…&lt;/div&gt;
+    &lt;div class="card"&gt;…&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+      <div class="try"><b>试一试 →</b><span>把浏览器窗口缩到 880px 以下：<code>.grid-3</code> 自动降为 1 列，侧栏变成抽屉。</span></div>
+    </section>
+
+    <!-- 04 按钮 -->
+    <section class="lesson" id="buttons">
+      <div class="lesson-head"><span class="lesson-num">04</span><h2>按钮</h2></div>
+      <p class="lesson-intro">全家只有 <code>.btn</code> 一个基类，其余全是叠加的修饰类。点下面的按钮试试禁用与加载态。</p>
+
+      <div class="stage">
+        <div class="stage-bar"><span class="live-dot"></span>实时演示</div>
+        <div class="stage-body">
+        <div class="inline mb-4">
+          <button class="btn">主按钮</button>
+          <button class="btn btn-outline">描边</button>
+          <button class="btn btn-secondary">次级</button>
+          <button class="btn btn-ghost">幽灵</button>
+        </div>
+        <div class="inline mb-4">
+          <button class="btn btn-success">成功</button>
+          <button class="btn btn-warning">警告</button>
+          <button class="btn btn-danger">危险</button>
+          <button class="btn" disabled>禁用</button>
+        </div>
+        <div class="inline">
+          <button class="btn btn-sm">小</button>
+          <button class="btn">默认</button>
+          <button class="btn btn-lg">大</button>
+          <button class="btn" data-loading>加载</button>
+          <div class="btn-group">
+            <button class="btn btn-secondary is-active" data-seg>日</button>
+            <button class="btn btn-secondary" data-seg>周</button>
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <pre class="snippet mt-4"><code>&lt;button class="btn"&gt;主按钮&lt;/button&gt;
+&lt;button class="btn btn-outline"&gt;描边&lt;/button&gt;
+&lt;button class="btn btn-danger btn-sm"&gt;危险小按钮&lt;/button&gt;
+&lt;button class="btn is-loading"&gt;加载中&lt;/button&gt;</code></pre>
+
+      <div class="try"><b>试一试 →</b><span>点上面那个「加载」按钮：<code>.is-loading</code> 是纯 CSS 转圈，文字自动隐藏，不需要额外的 spinner 元素。</span></div>
+    </section>
+
+    <!-- 05 卡片 -->
+    <section class="lesson" id="cards">
+      <div class="lesson-head"><span class="lesson-num">05</span><h2>卡片</h2></div>
+      <p class="lesson-intro">卡片是 CCS 的主体语言：白底 + 1px 边框 + 4px 左色条。悬停只加阴影，<strong>不做位移</strong>。</p>
+
+      <div class="stage">
+        <div class="stage-bar"><span class="live-dot"></span>实时演示</div>
+        <div class="stage-body">
+        <div class="card-grid">
+          <a class="card" href="javascript:void(0)">
+            <h3 class="card-title">默认卡片</h3>
+            <p class="card-text">左色条即强调。整张卡可做链接。</p>
+            <div class="card-meta"><span>2026-11-08</span></div>
+          </a>
+          <div class="card card-top">
+            <h3 class="card-title">顶部色条</h3>
+            <p class="card-text"><code>.card-top</code> 换到上边，适合内容型。</p>
+          </div>
+          <div class="card card-plain">
+            <h3 class="card-title">无色条</h3>
+            <p class="card-text"><code>.card-plain</code> 用于中性信息。</p>
+            <div class="card-footer">
+              <span>12 次阅读</span>
+              <a class="btn btn-sm" href="javascript:void(0)">阅读</a>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <pre class="snippet mt-4"><code>&lt;div class="card-grid"&gt;
+  &lt;a class="card" href="/post/1"&gt;
+    &lt;h3 class="card-title"&gt;标题&lt;/h3&gt;
+    &lt;p class="card-text"&gt;描述&lt;/p&gt;
+    &lt;div class="card-meta"&gt;&lt;span&gt;2026-11-08&lt;/span&gt;&lt;/div&gt;
+  &lt;/a&gt;
+&lt;/div&gt;</code></pre>
+
+      <div class="try"><b>试一试 →</b><span>把鼠标移到第一张卡上：边框变深 + 阴影出现，但位置不动。这就是「无悬浮位移」。</span></div>
+    </section>
+
+    <!-- 06 分类色 -->
+    <section class="lesson" id="colors">
+      <div class="lesson-head"><span class="lesson-num">06</span><h2>分类色</h2></div>
+      <p class="lesson-intro">这是 CCS 最值得学的一个机制：<code>.cat-*</code> <strong>只定义两个局部变量</strong>，加在任何容器上，里面的 <code>.chip</code> 和卡片左色条都会跟着变色。</p>
+
+      <div class="stage">
+        <div class="stage-bar"><span class="live-dot"></span>实时演示</div>
+        <div class="stage-body">
+        <div class="card-list">
+          <a class="card cat-blue" href="javascript:void(0)">
+            <h3 class="card-title">记录</h3>
+            <div class="card-meta"><span class="chip">记录</span><span>·</span><span>cat-blue</span></div>
+          </a>
+          <a class="card cat-purple" href="javascript:void(0)">
+            <h3 class="card-title">文学</h3>
+            <div class="card-meta"><span class="chip">文学</span><span>·</span><span>cat-purple</span></div>
+          </a>
+          <a class="card cat-teal" href="javascript:void(0)">
+            <h3 class="card-title">理论</h3>
+            <div class="card-meta"><span class="chip">理论</span><span>·</span><span>cat-teal</span></div>
+          </a>
+          <a class="card cat-orange" href="javascript:void(0)">
+            <h3 class="card-title">学习</h3>
+            <div class="card-meta"><span class="chip">学习</span><span>·</span><span>cat-orange</span></div>
+          </a>
+        </div>
+        </div>
+      </div>
+
+      <div class="knobs">
+        <label class="knob"><span class="k">给卡片换色</span>
+          <select id="kCat">
+            <option value="cat-blue">cat-blue</option>
+            <option value="cat-purple">cat-purple</option>
+            <option value="cat-teal">cat-teal</option>
+            <option value="cat-orange">cat-orange</option>
+            <option value="cat-pink">cat-pink</option>
+            <option value="cat-red">cat-red</option>
+            <option value="cat-green">cat-green</option>
+            <option value="cat-gray">cat-gray</option>
+          </select>
+        </label>
+        <span class="text-xs text-muted">切换后观察演示区第一张卡的左色条与 chip</span>
+      </div>
+
+      <pre class="snippet mt-4"><code>/* .cat-* 只做两件事：定义 --cat 与 --cat-soft */
+.cat-blue { --cat: #0969DA; --cat-soft: rgba(9,105,218,.12); }
+
+/* 于是这两处无需写颜色，自动继承 */
+.card[class*="cat-"] { border-left-color: var(--cat); }
+.chip { color: var(--cat); background: var(--cat-soft); }
+
+/* 用的时候：容器加类即可 */
+&lt;a class="card cat-teal" href="#"&gt;
+  &lt;span class="chip"&gt;理论&lt;/span&gt;
+&lt;/a&gt;</code></pre>
+
+      <div class="try"><b>试一试 →</b><span>把 <code>.cat-teal</code> 加到一个外层 <code>div</code> 上，里面的所有 <code>.chip</code> 会一起变青——变量是继承的。</span></div>
+    </section>
+
+    <!-- 07 表单 -->
+    <section class="lesson" id="forms">
+      <div class="lesson-head"><span class="lesson-num">07</span><h2>表单</h2></div>
+      <p class="lesson-intro">裸 <code>input</code> / <code>select</code> / <code>textarea</code> 就自带样式，不需要加类。填写下面的表单，标题留空点「保存」会触发校验样式。</p>
+
+      <div class="stage">
+        <div class="stage-bar"><span class="live-dot"></span>实时演示</div>
+        <div class="stage-body">
+        <form class="form-grid" id="tutForm" novalidate style="max-width:620px">
+          <div class="field">
+            <label class="label" for="tTitle">标题<span class="req">*</span></label>
+            <input id="tTitle" type="text" placeholder="留空试试">
+            <span class="field-error is-hidden" id="tTitleErr">标题不能为空。</span>
+          </div>
+          <div class="field">
+            <label class="label" for="tCat">分类</label>
+            <select id="tCat"><option>记录</option><option>文学</option><option>学习</option></select>
+          </div>
+          <div class="field full">
+            <label class="label" for="tSearch">搜索框（放大镜为纯 CSS）</label>
+            <div class="search"><input id="tSearch" type="search" placeholder="搜索文章…"></div>
+          </div>
+          <div class="field full">
+            <label class="label">开关 / 复选 / 单选</label>
+            <div class="inline" style="gap:22px">
+              <label class="switch"><input type="checkbox" checked><span class="track"></span> 定时发布</label>
+              <label class="check"><input type="checkbox" checked> 原创</label>
+              <label class="radio"><input type="radio" name="vis" checked> 公开</label>
+              <label class="radio"><input type="radio" name="vis"> 受保护</label>
+            </div>
+          </div>
+          <div class="form-actions full">
+            <button class="btn" type="submit">保存</button>
+            <button class="btn btn-secondary" type="reset">重置</button>
+          </div>
+        </form>
+        </div>
+      </div>
+
+      <pre class="snippet mt-4"><code>&lt;div class="field"&gt;
+  &lt;label class="label" for="title"&gt;标题&lt;span class="req"&gt;*&lt;/span&gt;&lt;/label&gt;
+  &lt;input id="title" type="text"&gt;
+  &lt;span class="field-error"&gt;标题不能为空。&lt;/span&gt;
+&lt;/div&gt;
+
+&lt;label class="switch"&gt;
+  &lt;input type="checkbox" checked&gt;&lt;span class="track"&gt;&lt;/span&gt; 定时发布
+&lt;/label&gt;</code></pre>
+
+      <div class="try"><b>试一试 →</b><span>校验失败时给输入框加 <code>.is-invalid</code>，成功时加 <code>.is-valid</code>——边框颜色由样式表负责，你只管加类。</span></div>
+    </section>
+
+    <!-- 08 表格 -->
+    <section class="lesson" id="tables">
+      <div class="lesson-head"><span class="lesson-num">08</span><h2>表格</h2></div>
+      <p class="lesson-intro">裸 <code>table</code> 已有边框、斑马纹和悬停高亮。外面套 <code>.table-card</code> 能得到规整的卡片边界。</p>
+
+      <div class="stage">
+        <div class="stage-bar"><span class="live-dot"></span>实时演示</div>
+        <div class="stage-body">
+        <div class="table-card">
+          <table>
+            <thead><tr><th>变量</th><th>默认值</th><th class="num">用途</th></tr></thead>
+            <tbody>
+              <tr><td><code>--accent</code></td><td class="mono">#0969DA</td><td class="num">主色</td></tr>
+              <tr><td><code>--border</code></td><td class="mono">#D0D7DE</td><td class="num">默认边框</td></tr>
+              <tr><td><code>--bar</code></td><td class="mono">4px</td><td class="num">左色条宽度</td></tr>
+            </tbody>
+          </table>
+        </div>
+        </div>
+      </div>
+
+      <pre class="snippet mt-4"><code>&lt;div class="table-card"&gt;
+  &lt;table&gt;
+    &lt;thead&gt;&lt;tr&gt;&lt;th&gt;列&lt;/th&gt;&lt;th class="num"&gt;数字列&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;
+    &lt;tbody&gt;&lt;tr&gt;&lt;td&gt;值&lt;/td&gt;&lt;td class="num"&gt;42&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;
+  &lt;/table&gt;
+&lt;/div&gt;</code></pre>
+
+      <div class="try"><b>试一试 →</b><span>鼠标扫过表格行，背景会变成主色浅底。<code>.num</code> 用等宽数字，对齐更整齐。</span></div>
+    </section>
+
+    <!-- 09 导航 -->
+    <section class="lesson" id="navs">
+      <div class="lesson-head"><span class="lesson-num">09</span><h2>导航组件</h2></div>
+      <p class="lesson-intro">面包屑、分页、筛选、标签页——都是「拼接无圆角」的硬边风格。</p>
+
+      <div class="stage">
+        <div class="stage-bar"><span class="live-dot"></span>实时演示</div>
+        <div class="stage-body">
+
+        <ul class="breadcrumb">
+          <li><a href="javascript:void(0)">首页</a></li>
+          <li><a href="javascript:void(0)">教程</a></li>
+          <li><span aria-current="page">导航组件</span></li>
+        </ul>
+
+        <div class="filters" id="kFilterBar">
+          <a href="javascript:void(0)" class="is-active" data-f="">全部</a>
+          <a href="javascript:void(0)" data-f="记录">记录</a>
+          <a href="javascript:void(0)" data-f="文学">文学</a>
+        </div>
+
+        <div class="tabs" style="margin-top:16px">
+          <button class="is-active" data-tab>全部</button>
+          <button data-tab>原创</button>
+          <button data-tab>搬运</button>
+        </div>
+
+        <nav class="pagination" style="margin-bottom:0">
+          <span class="is-disabled">上一页</span>
+          <a href="javascript:void(0)" class="is-active">1</a>
+          <a href="javascript:void(0)">2</a>
+          <a href="javascript:void(0)">下一页</a>
+        </nav>
+        </div>
+      </div>
+
+      <pre class="snippet mt-4"><code>&lt;div class="filters"&gt;
+  &lt;a href="#" class="is-active"&gt;全部&lt;/a&gt;
+  &lt;a href="#"&gt;记录&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;nav class="pagination"&gt;
+  &lt;span class="is-disabled"&gt;上一页&lt;/span&gt;
+  &lt;a href="#" class="is-active"&gt;1&lt;/a&gt;
+  &lt;a href="#"&gt;2&lt;/a&gt;
+&lt;/nav&gt;</code></pre>
+
+      <div class="try"><b>试一试 →</b><span>点筛选按钮和标签页：状态切换只需在 JS 里 <code>classList.toggle('is-active')</code>，样式表已备好两套配色。</span></div>
+    </section>
+
+    <!-- 10 提示与浮层 -->
+    <section class="lesson" id="feedback">
+      <div class="lesson-head"><span class="lesson-num">10</span><h2>提示与浮层</h2></div>
+      <p class="lesson-intro">四种语气 + 三种浮层。Toast 和模态都可以直接点开试。</p>
+
+      <div class="stage">
+        <div class="stage-bar"><span class="live-dot"></span>实时演示</div>
+        <div class="stage-body">
+        <div class="notice"><strong>默认</strong> 中性提示。</div>
+        <div class="notice notice-success">操作已成功保存。</div>
+        <div class="notice notice-warning">该文章已加密。</div>
+        <div class="notice notice-danger">构建失败：缺少 category 字段。</div>
+        <div class="inline mt-4">
+          <button class="btn btn-secondary" id="tryToast">弹一个 Toast</button>
+          <button class="btn btn-secondary" id="tryModal">打开模态</button>
+          <span class="badge" data-tip="零 JS 的 Tooltip">悬停我</span>
+        </div>
+        </div>
+      </div>
+
+      <pre class="snippet mt-4"><code>&lt;div class="notice notice-warning"&gt;该文章已加密。&lt;/div&gt;
+
+&lt;span class="badge" data-tip="零 JS 的 Tooltip"&gt;悬停我&lt;/span&gt;
+
+&lt;div class="toast-wrap"&gt;&lt;div class="toast success"&gt;保存成功&lt;/div&gt;&lt;/div&gt;</code></pre>
+
+      <div class="try"><b>试一试 →</b><span>按 <kbd>Esc</kbd> 关闭模态，或点遮罩。遮罩点击关闭由你的一行 JS 完成，样式表只负责 <code>.is-open</code> 的显示。</span></div>
+    </section>
+
+    <!-- 11 文章正文 -->
+    <section class="lesson" id="article">
+      <div class="lesson-head"><span class="lesson-num">11</span><h2>文章正文</h2></div>
+      <p class="lesson-intro"><code>.article-body</code> 是长文专用排版容器：行高 1.85、二级标题自动带分隔线、长公式横向滚动。</p>
+
+      <div class="stage">
+        <div class="stage-bar"><span class="live-dot"></span>实时演示</div>
+        <div class="stage-body">
+        <div class="article-meta" style="margin-top:0">
+          <span class="item">2026-11-08</span>
+          <span class="item">记录</span>
+          <span class="item">8 分钟</span>
+          <span class="item">原创</span>
+        </div>
+        <article class="article-body" style="font-size:16px">
+          <h2>为什么要自己写一套 CSS</h2>
+          <p>因为每写一个新页面，你都在重复实现同一套按钮、卡片、提示框。把决定过一次的事情写进变量，之后只做「组合」。</p>
+          <h3>组合优于复制</h3>
+          <p>一个分类列表页可以完全由 <code>.filters</code> + <code>.card-list</code> + <code>.card.cat-*</code> 拼出来，不写一行新 CSS。</p>
+        </article>
+        <nav class="post-nav">
+          <a href="javascript:void(0)"><span class="dir">← 上一篇</span>分类配色体系</a>
+          <a href="javascript:void(0)" class="next"><span class="dir">下一篇 →</span>写作工作台</a>
+        </nav>
+        </div>
+      </div>
+
+      <pre class="snippet mt-4"><code>&lt;div class="page container container-narrow"&gt;
+  &lt;h1 class="page-title"&gt;标题&lt;/h1&gt;
+
+  &lt;div class="article-meta"&gt;
+    &lt;span class="item"&gt;2026-11-08&lt;/span&gt;
+  &lt;/div&gt;
+
+  &lt;article class="article-body"&gt;
+    &lt;h2&gt;小节&lt;/h2&gt;&lt;p&gt;正文&lt;/p&gt;
+  &lt;/article&gt;
+
+  &lt;nav class="post-nav"&gt;…&lt;/nav&gt;
+&lt;/div&gt;</code></pre>
+
+      <div class="try"><b>试一试 →</b><span>把窗口拖窄：文章容器是 760px 的 <code>container-narrow</code>，行宽始终控制在舒适阅读区间。</span></div>
+    </section>
+
+    <!-- 12 实战配方 -->
+    <section class="lesson" id="recipe">
+      <div class="lesson-head"><span class="lesson-num">12</span><h2>实战配方</h2></div>
+      <p class="lesson-intro">把前面学的拼起来。下面三个是你在博客里最常写的页面，都是「不加 CSS」直接组合出来的。</p>
+
+      <div class="divider-label">配方 A · 文章列表页</div>
+      <pre class="snippet"><code>&lt;main class="main"&gt;
+  &lt;div class="page container"&gt;
+    &lt;div class="page-head"&gt;
+      &lt;h1 class="page-title"&gt;文章&lt;/h1&gt;
+      &lt;p class="page-sub"&gt;按时间倒序&lt;/p&gt;
+    &lt;/div&gt;
+
+    &lt;div class="filters"&gt;
+      &lt;a href="#" class="is-active"&gt;全部&lt;/a&gt;
+      &lt;a href="#"&gt;记录&lt;/a&gt;
+    &lt;/div&gt;
+
+    &lt;div class="card-list"&gt;
+      &lt;a class="card cat-teal" href="/p/1"&gt;
+        &lt;h3 class="card-title"&gt;标题&lt;/h3&gt;
+        &lt;div class="card-meta"&gt;&lt;span class="chip"&gt;理论&lt;/span&gt;&lt;/div&gt;
+      &lt;/a&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/main&gt;</code></pre>
+
+      <div class="divider-label">配方 B · 资源下载页</div>
+      <pre class="snippet"><code>&lt;ul class="entry-list"&gt;
+  &lt;li class="entry"&gt;
+    &lt;div class="entry-body"&gt;
+      &lt;div class="entry-title"&gt;线性代数讲义.pdf&lt;/div&gt;
+      &lt;div class="entry-desc"&gt;2026-10-30 · 学习&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class="entry-actions"&gt;
+      &lt;a class="btn btn-outline btn-sm" href="/pdf/x.pdf"&gt;PDF&lt;/a&gt;
+      &lt;a class="btn btn-sm" href="/p/x"&gt;查看&lt;/a&gt;
+    &lt;/div&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;</code></pre>
+
+      <div class="divider-label">配方 C · 站点概览（数字卡）</div>
+      <pre class="snippet"><code>&lt;div class="stats"&gt;
+  &lt;div class="stat"&gt;
+    &lt;div class="stat-value"&gt;128&lt;/div&gt;
+    &lt;div class="stat-label"&gt;文章&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="stat"&gt;
+    &lt;div class="stat-value"&gt;12&lt;/div&gt;
+    &lt;div class="stat-label"&gt;分类&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+
+      <div class="stage" style="margin-top:24px">
+        <div class="stage-bar"><span class="live-dot"></span>配方 C 的实际效果</div>
+        <div class="stage-body">
+        <div class="stats">
+          <div class="stat"><div class="stat-value">128</div><div class="stat-label">文章</div></div>
+          <div class="stat"><div class="stat-value">12</div><div class="stat-label">分类</div></div>
+          <div class="stat"><div class="stat-value">99.9%</div><div class="stat-label">可用性</div></div>
+        </div>
+        </div>
+      </div>
+
+      <div class="notice notice-info mt-6">
+        <strong>接下来：</strong>最后一课讲「一个类都不加」时会发生什么 —— 这也是最容易踩的坑。
+      </div>
+
+      <div class="lesson-nav">
+        <a href="#article"><span class="dir">← 上一课</span>11 文章正文</a>
+        <a href="#bare" class="next"><span class="dir">下一课 →</span>13 零类名兜底</a>
+      </div>
+    </section>
+
+    <!-- 13 零类名兜底 -->
+    <section class="lesson" id="bare">
+      <div class="lesson-head"><span class="lesson-num">13</span><h2>零类名兜底</h2></div>
+      <p class="lesson-intro">
+        到目前为止，每个演示都加了类。如果你写一段<strong>一个 class 都没有</strong>的 HTML —— 比如随手做的练习页 —— 会看到什么？
+        答案是：只剩 <code>body</code>、<code>h1~h6</code>、<code>p</code>、<code>a</code> 这些<strong>标签级</strong>规则在工作，
+        输入框和按钮全是浏览器原生的样子。那不是没加载成功，而是<strong>组件样式本来就要靠类触发</strong>。
+      </p>
+
+      <div class="divider-label">旧版的两个坑（已在 ccs.css 修好）</div>
+      <div class="stage">
+        <div class="stage-bar"><span class="live-dot"></span>为什么裸 input 没样式</div>
+        <div class="stage-body">
+          <pre class="snippet"><code>/* 坑 1：只列举具体 type，裸 input 匹配不到 */
+input[type="text"], input[type="number"] { … }
+/* &lt;input id="a" name="a"&gt; 没有 type 属性
+   → 等价于 text，但选择器写的是 [type="text"]，匹配失败 */
+
+/* 修复：改成「排除法」，裸 input 也会落进来 */
+:where(input:not([type="checkbox"]):not([type="radio"])
+        :not([type="submit"]):not([type="hidden"]), select, textarea) { … }
+
+/* 坑 2：&lt;input type="submit"&gt; 不属于 .btn 体系，保持原生灰按钮
+   修复：第 17 节给它和裸 &lt;button&gt; 补了与 .btn 一致的外观 */</code></pre>
+        </div>
+      </div>
+
+      <div class="divider-label">现在：零类名也体面</div>
+      <p>ccs.css 第 17 节给裸标签补了一层默认呈现。下面这块演示区里的每个元素<strong>都没有 class</strong>：</p>
+
+      <div class="stage">
+        <div class="stage-bar"><span class="live-dot"></span>零 class 实时演示</div>
+        <div class="stage-body">
+          <h3 style="margin-top:0">A + B 计算器</h3>
+          <p class="text-sm text-muted">标题、段落、标签、输入框、提交按钮、结果框，全部裸标签。</p>
+
+          <form id="bareForm" style="max-width:none;margin:var(--sp-4) 0 0;border-left-width:var(--bar)">
+            <label for="ba">A</label>
+            <input id="ba" name="ba" inputmode="decimal" autocomplete="off" placeholder="输入第一个数">
+
+            <label for="bb">B</label>
+            <input id="bb" name="bb" inputmode="decimal" autocomplete="off" placeholder="输入第二个数">
+
+            <input type="submit" value="计算 A + B">
+            <input type="reset" value="重置">
+          </form>
+
+          <p style="margin-top:var(--sp-4)">结果：<output id="bareSum">—</output></p>
+        </div>
+      </div>
+
+      <pre class="snippet mt-4"><code>&lt;h1&gt;A + B 计算器&lt;/h1&gt;
+
+&lt;form&gt;
+  &lt;label for="a"&gt;A&lt;/label&gt;
+  &lt;input id="a" name="a" inputmode="decimal"&gt;
+
+  &lt;label for="b"&gt;B&lt;/label&gt;
+  &lt;input id="b" name="b" inputmode="decimal"&gt;
+
+  &lt;input type="submit" value="计算 A + B"&gt;
+&lt;/form&gt;
+
+&lt;p&gt;结果：&lt;output id="sum"&gt;—&lt;/output&gt;&lt;/p&gt;</code></pre>
+
+      <div class="try">
+        <b>试一试 →</b>
+        <span>在演示里填两个小数相加（比如 <code>0.1</code> 和 <code>0.2</code>），结果是 <code>0.3</code> 而不是 <code>0.30000000000000004</code> —— 演示脚本按小数位放大成整数再相加。</span>
+      </div>
+
+      <div class="divider-label">兜底覆盖清单</div>
+      <table class="table-wrap">
+        <thead><tr><th>裸标签</th><th>兜底后</th></tr></thead>
+        <tbody>
+          <tr><td><code>body &gt; form</code></td><td>白底卡片 + 左侧主色条 + 内边距，760px 居中</td></tr>
+          <tr><td>无 class 的 <code>label</code></td><td>块级、14px 加粗</td></tr>
+          <tr><td>无 class 的 <code>input</code> / <code>select</code> / <code>textarea</code></td><td>白底、1px 描边、2px 圆角、占满整行</td></tr>
+          <tr><td><code>input[type=submit]</code></td><td>主色实心（等同 <code>.btn</code>）</td></tr>
+          <tr><td><code>input[type=button|reset]</code> / 裸 <code>button</code></td><td>描边按钮（等同 <code>.btn-outline</code>）</td></tr>
+          <tr><td><code>output</code></td><td>主色浅底徽章</td></tr>
+          <tr><td><code>fieldset</code> / <code>legend</code></td><td>带边框分组 + 分组标题</td></tr>
+        </tbody>
+      </table>
+
+      <div class="notice notice-warning mt-6">
+        <strong>注意：</strong>兜底只作用于「无 class」的元素和 <code>body</code> 的直接子级。
+        一旦你加了 <code>.page</code> / <code>.btn</code> 等类，就完全交给组件规则，两者不会打架。
+        不想要这层兜底，删掉 ccs.css 第 17 节整段即可。
+      </div>
+
+      <label class="done-toggle mt-6"><input type="checkbox" id="doneAll"> 标记本课程已完成</label>
+
+      <div class="lesson-nav">
+        <a href="#recipe"><span class="dir">← 上一课</span>12 实战配方</a>
+        <a href="#intro" class="next"><span class="dir">从头再来 →</span>00 开始</a>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- 模态 & Toast -->
+<div class="modal-mask" id="tutModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>这是模态</h3>
+      <button class="close" data-close>✕</button>
+    </div>
+    <div class="modal-body">
+      <p>样式表只提供 <code>.modal-mask.is-open</code> 的显隐，其余交互由你的 JS 控制。</p>
+      <div class="notice notice-warning mb-0">按 Esc 或点遮罩也能关闭。</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" data-close>知道了</button>
+    </div>
+  </div>
+</div>
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var root = document.documentElement;
+  var LS_THEME = 'ccs-tut-theme';
+  var LS_DONE = 'ccs-tut-done';
+
+  /* ---------- 主题 ---------- */
+  var savedTheme = localStorage.getItem(LS_THEME);
+  if (savedTheme) root.setAttribute('data-theme', savedTheme);
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    localStorage.setItem(LS_THEME, next);
+  });
+
+  /* ---------- 移动端目录抽屉 ---------- */
+  var side = document.getElementById('side');
+  var ov = document.getElementById('ov');
+  function closeSide() { side.classList.remove('is-open'); ov.classList.remove('is-open'); }
+  document.getElementById('menuToggle').addEventListener('click', function () {
+    side.classList.toggle('is-open');
+    ov.classList.toggle('is-open');
+  });
+  ov.addEventListener('click', closeSide);
+  side.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', closeSide); });
+
+  /* ---------- 复制按钮：全部由 JS 注入，避免混进被复制的代码 ---------- */
+  document.querySelectorAll('pre.snippet').forEach(function (pre) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = '复制';
+    pre.appendChild(btn);
+    btn.addEventListener('click', function () {
+      var code = pre.querySelector('code');
+      var text = code ? code.textContent : '';
+      var done = function () {
+        btn.textContent = '已复制';
+        setTimeout(function () { btn.textContent = '复制'; }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+      } else {
+        fallbackCopy(text, done);
+      }
+    });
+  });
+  function fallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { toast('请手动选择复制', 'warning'); }
+    document.body.removeChild(ta);
+  }
+
+  /* ---------- Toast ---------- */
+  var toastWrap = document.getElementById('toasts');
+  function toast(msg, type) {
+    var el = document.createElement('div');
+    el.className = 'toast ' + (type || '');
+    el.textContent = msg;
+    toastWrap.appendChild(el);
+    setTimeout(function () { el.remove(); }, 2600);
+  }
+  document.getElementById('tryToast').addEventListener('click', function () {
+    toast('这是一条成功提示', 'success');
+  });
+
+  /* ---------- 模态 ---------- */
+  var modal = document.getElementById('tutModal');
+  function openModal() { modal.classList.add('is-open'); }
+  function closeModal() { modal.classList.remove('is-open'); }
+  document.getElementById('tryModal').addEventListener('click', openModal);
+  modal.querySelectorAll('[data-close]').forEach(function (b) { b.addEventListener('click', closeModal); });
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { closeModal(); closeSide(); }
+  });
+
+  /* ---------- 按钮：加载态 & 按钮组 ---------- */
+  document.querySelectorAll('[data-loading]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      b.classList.add('is-loading');
+      setTimeout(function () { b.classList.remove('is-loading'); }, 1100);
+    });
+  });
+  document.querySelectorAll('[data-seg]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var group = b.parentElement;
+      group.querySelectorAll('[data-seg]').forEach(function (x) { x.classList.remove('is-active'); });
+      b.classList.add('is-active');
+    });
+  });
+
+  /* ---------- 标签页 ---------- */
+  document.querySelectorAll('[data-tab]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      b.parentElement.querySelectorAll('[data-tab]').forEach(function (x) { x.classList.remove('is-active'); });
+      b.classList.add('is-active');
+    });
+  });
+
+  /* ---------- 筛选 ---------- */
+  var fb = document.getElementById('kFilterBar');
+  fb.querySelectorAll('[data-f]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      fb.querySelectorAll('a').forEach(function (x) { x.classList.remove('is-active'); });
+      a.classList.add('is-active');
+    });
+  });
+
+  /* ---------- 01 令牌旋钮 ---------- */
+  var ACCENTS = {
+    '#0969DA': ['#0550AE', 'rgba(9,105,218,.10)', 'rgba(9,105,218,.35)'],
+    '#1A7F37': ['#116329', 'rgba(26,127,55,.10)', 'rgba(26,127,55,.35)'],
+    '#8250DF': ['#6639BA', 'rgba(130,80,223,.10)', 'rgba(130,80,223,.35)'],
+    '#BC4C00': ['#953800', 'rgba(188,76,0,.10)', 'rgba(188,76,0,.35)'],
+    '#CF222E': ['#A40E26', 'rgba(207,34,46,.10)', 'rgba(207,34,46,.35)']
+  };
+  var kAccent = document.getElementById('kAccent');
+  var kRadius = document.getElementById('kRadius');
+  var kBar = document.getElementById('kBar');
+  var kRadiusVal = document.getElementById('kRadiusVal');
+  var kBarVal = document.getElementById('kBarVal');
+
+  function applyTokens() {
+    var a = ACCENTS[kAccent.value] || ACCENTS['#0969DA'];
+    // 只作用于演示卡片，避免整页乱跳
+    var scope = document.getElementById('tokenCard');
+    scope.style.setProperty('--accent', kAccent.value);
+    scope.style.setProperty('--accent-strong', a[0]);
+    scope.style.setProperty('--accent-soft', a[1]);
+    scope.style.setProperty('--accent-line', a[2]);
+    scope.style.setProperty('--cat', kAccent.value);
+    scope.style.setProperty('--cat-soft', a[1]);
+    kRadiusVal.textContent = kRadius.value + 'px';
+    kBarVal.textContent = kBar.value + 'px';
+    scope.style.setProperty('--radius-sm', kRadius.value + 'px');
+    scope.style.setProperty('--bar', kBar.value + 'px');
+    // 卡片内按钮也换成变量驱动
+    scope.querySelectorAll('.btn').forEach(function (b) {
+      var isOutline = b.classList.contains('btn-outline');
+      b.style.background = isOutline ? 'transparent' : kAccent.value;
+      b.style.borderColor = kAccent.value;
+      b.style.color = isOutline ? kAccent.value : '#fff';
+    });
+  }
+  kAccent.addEventListener('change', applyTokens);
+  kRadius.addEventListener('input', applyTokens);
+  kBar.addEventListener('input', applyTokens);
+  document.getElementById('kReset').addEventListener('click', function () {
+    kAccent.value = '#0969DA';
+    kRadius.value = 2;
+    kBar.value = 4;
+    applyTokens();
+  });
+
+  /* ---------- 03 布局旋钮 ---------- */
+  var gridDemo = document.getElementById('gridDemo');
+  var kCols = document.getElementById('kCols');
+  var kGap = document.getElementById('kGap');
+  var kGapVal = document.getElementById('kGapVal');
+  ['grid-2', 'grid-3', 'grid-4', 'grid-auto'].forEach(function (c) { gridDemo.classList.remove(c); });
+  gridDemo.classList.add('grid-3');
+  kCols.addEventListener('change', function () {
+    ['grid-2', 'grid-3', 'grid-4', 'grid-auto'].forEach(function (c) { gridDemo.classList.remove(c); });
+    gridDemo.classList.add(kCols.value);
+  });
+  kGap.addEventListener('input', function () {
+    kGapVal.textContent = kGap.value + 'px';
+    gridDemo.style.gap = kGap.value + 'px';
+  });
+
+  /* ---------- 06 分类色旋钮 ---------- */
+  var kCat = document.getElementById('kCat');
+  var firstCard = document.querySelector('#colors .card-list .card');
+  var CATS = ['cat-blue', 'cat-purple', 'cat-teal', 'cat-orange', 'cat-pink', 'cat-red', 'cat-green', 'cat-gray'];
+  kCat.addEventListener('change', function () {
+    CATS.forEach(function (c) { firstCard.classList.remove(c); });
+    firstCard.classList.add(kCat.value);
+  });
+
+  /* ---------- 07 表单校验 ---------- */
+  var tutForm = document.getElementById('tutForm');
+  var tTitle = document.getElementById('tTitle');
+  var tTitleErr = document.getElementById('tTitleErr');
+  tutForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!tTitle.value.trim()) {
+      tTitle.classList.add('is-invalid');
+      tTitle.classList.remove('is-valid');
+      tTitleErr.classList.remove('is-hidden');
+      tTitle.focus();
+      return;
+    }
+    tTitle.classList.remove('is-invalid');
+    tTitle.classList.add('is-valid');
+    tTitleErr.classList.add('is-hidden');
+    toast('校验通过：这个绿色边框就是 .is-valid', 'success');
+  });
+  tTitle.addEventListener('input', function () {
+    if (tTitle.value.trim()) {
+      tTitle.classList.remove('is-invalid');
+      tTitleErr.classList.add('is-hidden');
+    }
+  });
+
+  /* ---------- 进度与当前章节 ---------- */
+  var lessons = Array.prototype.slice.call(document.querySelectorAll('.lesson'));
+  var navLinks = Array.prototype.slice.call(document.querySelectorAll('#tutNav a'));
+  var progressBar = document.getElementById('progressBar');
+  var progressLabel = document.getElementById('progressLabel');
+  var DONE_KEY = LS_DONE;
+
+  function readDone() {
+    try { return JSON.parse(localStorage.getItem(DONE_KEY) || '[]'); } catch (e) { return []; }
+  }
+  function writeDone(arr) {
+    try { localStorage.setItem(DONE_KEY, JSON.stringify(arr)); } catch (e) {}
+  }
+
+  function updateProgress() {
+    var done = readDone().filter(function (id) {
+      return document.getElementById(id);
+    });
+    if (progressLabel) progressLabel.textContent = done.length + ' / ' + lessons.length;
+    if (progressBar) {
+      var pct = lessons.length ? (done.length / lessons.length) * 100 : 0;
+      progressBar.style.width = pct + '%';
+    }
+    done.forEach(function (id) {
+      var link = document.querySelector('#tutNav a[href="#' + id + '"]');
+      if (link) link.style.color = 'var(--success)';
+    });
+  }
+
+  // 滚动时高亮当前章节
+  var ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      var y = window.scrollY + 110;
+      var current = lessons[0];
+      lessons.forEach(function (l) {
+        if (l.offsetTop <= y) current = l;
+      });
+      navLinks.forEach(function (a) {
+        a.classList.toggle('is-active', a.getAttribute('href') === '#' + current.id);
+      });
+      ticking = false;
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // 每章读到底部自动记为已完成（滚出视口上方 + 已进入过）
+  var seen = {};
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          seen[en.target.id] = true;
+        } else if (seen[en.target.id] && en.boundingClientRect.top < 0) {
+          // 整章滑过视口顶部 → 视为读完
+          var done = readDone();
+          if (done.indexOf(en.target.id) === -1) {
+            done.push(en.target.id);
+            writeDone(done);
+            updateProgress();
+          }
+        }
+      });
+    }, { threshold: 0.15 });
+    lessons.forEach(function (l) { io.observe(l); });
+  }
+
+  var doneAll = document.getElementById('doneAll');
+  if (doneAll) {
+    doneAll.checked = readDone().length >= lessons.length;
+    doneAll.addEventListener('change', function () {
+      writeDone(doneAll.checked ? lessons.map(function (l) { return l.id; }) : []);
+      updateProgress();
+    });
+  }
+
+  /* ---------- 13 零类名演示：A + B 相加 ---------- */
+  (function () {
+    var form = document.getElementById('bareForm');
+    var a = document.getElementById('ba');
+    var b = document.getElementById('bb');
+    var out = document.getElementById('bareSum');
+    if (!form || !a || !b || !out) return;
+
+    // 按小数位放大成整数相加，避免 0.1 + 0.2 = 0.30000000000000004
+    function decimals(v) {
+      var s = String(v).trim();
+      var i = s.indexOf('.');
+      return i === -1 ? 0 : s.length - i - 1;
+    }
+    function add(x, y) {
+      var d = Math.min(Math.max(decimals(x), decimals(y)), 10);
+      var k = Math.pow(10, d);
+      return (Math.round(Number(x) * k) + Math.round(Number(y) * k)) / k;
+    }
+
+    function run(e) {
+      e.preventDefault();
+      var x = a.value.trim();
+      var y = b.value.trim();
+      if (x === '' || y === '' || isNaN(Number(x)) || isNaN(Number(y))) {
+        out.textContent = '请先填入两个数字';
+        return;
+      }
+      out.textContent = add(x, y);
+    }
+    form.addEventListener('submit', run);
+    form.addEventListener('reset', function () {
+      // reset 事件在清空之前触发，放到下一帧再清结果
+      setTimeout(function () { out.textContent = '—'; }, 0);
+    });
+  })();
+
+  /* ---------- 初始化 ---------- */
+  applyTokens();
+  kGapVal.textContent = kGap.value + 'px';
+  updateProgress();
+  onScroll();
+})();
+</script>
+</body>
+</html>

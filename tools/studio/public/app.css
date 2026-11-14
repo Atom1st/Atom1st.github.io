@@ -74,7 +74,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: var(-
 
 .shell {
   display: grid;
-  grid-template-columns: 296px minmax(0, 1fr) 330px;
+  grid-template-columns: 330px minmax(0, 1fr) 330px;
   height: 100vh;
 }
 
@@ -114,8 +114,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: var(-
   align-items: center;
   gap: 4px;
   padding: 10px 10px 8px;
-}
-.rail-search input {
+}.rail-search input {
   flex: 1;
   min-width: 0;
   height: 30px;
@@ -627,7 +626,371 @@ html[data-theme="dark"] .post-item.on { background: var(--surface-3); }
 
 /* 窄屏：收起右侧属性栏 */
 @media (max-width: 1180px) {
-  .shell { grid-template-columns: 260px minmax(0, 1fr); }
+  .shell { grid-template-columns: 300px minmax(0, 1fr); }
   .inspector { position: fixed; right: 0; top: 0; bottom: 0; width: 320px; z-index: 120; box-shadow: -8px 0 24px rgba(1, 4, 9, 0.18); }
   .inspector.collapsed { display: none; }
 }
+
+/* ═══════════════════════ 左侧导航 ═══════════════════════ */
+
+.rail { position: relative; }
+
+.rail-nav {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.nav-btn {
+  position: relative;
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 32px;
+  border: none;
+  border-right: 1px solid var(--border);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.nav-btn:last-child { border-right: none; }
+.nav-btn:hover { color: var(--text); background: var(--surface-3); }
+.nav-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+.nav-btn kbd {
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 0 3px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  line-height: 13px;
+}
+.nav-btn.active kbd { color: var(--accent); border-color: var(--accent); }
+.nav-badge {
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 0 3px;
+  line-height: 13px;
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.nav-count {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 0 3px;
+  line-height: 13px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-2);
+}
+
+.rail-view { display: none; flex: 1; min-height: 0; flex-direction: column; }
+.rail-view.active { display: flex; }
+
+.list-empty {
+  padding: 26px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.9;
+  list-style: none;
+}
+
+.rail-foot-top { border-top: none; padding: 4px 10px 10px; background: transparent; }
+
+.pi-flag.flag-today { color: var(--ok); }
+.pi-tag {
+  font-size: 9px;
+  padding: 0 3px;
+  line-height: 13px;
+  color: var(--accent);
+  border: 1px dashed var(--accent);
+}
+
+/* 草稿条目 */
+.draft-item .pi-title span {
+  display: block;
+  font-weight: 500 !important;
+  white-space: normal !important;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+/* ═══════════════════════ 今日面板 ═══════════════════════ */
+
+.today-scroll { flex: 1; min-height: 0; overflow-y: auto; }
+
+.t-block {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.t-h4 {
+  margin: 0 0 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.t-ring-wrap {
+  position: relative;
+  width: 138px;
+  height: 138px;
+  margin: 4px auto 10px;
+}
+.ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-bg {
+  fill: none;
+  stroke: var(--surface-3);
+  stroke-width: 8;
+}
+.ring-fg {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 8;
+  transition: stroke-dashoffset .5s ease;
+}
+.ring-fg.full { stroke: var(--ok); }
+.ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: none;
+}
+.ring-center b { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+.ring-center span { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+.t-tip {
+  margin: 0 0 10px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.t-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+}
+.t-stat {
+  padding: 10px 14px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.t-stat:nth-child(2n) { border-right: none; }
+.t-stat:nth-last-child(-n+2) { border-bottom: none; }
+.t-stat b { font-size: 18px; font-weight: 800; font-family: var(--mono); letter-spacing: -0.02em; }
+.t-stat span { font-size: 10px; color: var(--muted); letter-spacing: 0.06em; }
+
+/* ── 写作热力图 ── */
+/* 颜色 = 当天写得最多的分类，深浅 = 当天字数（相对每日目标分 4 级） */
+
+.t-h4-sub { font-weight: 400; letter-spacing: 0.04em; text-transform: none; color: var(--muted); }
+
+/* 尺寸先行：格子 CELL=16px，间距 GAP=4px，行头 18px。
+   列数 = (左栏 330 - 内边距 28 - 行头 18) / (16+4) ≈ 14 周，与 server.mjs heatData(weeks=14) 对应 */
+.heat-grid {
+  display: grid;
+  grid-template-columns: 18px repeat(14, 16px);
+  gap: 4px;
+  padding: 2px 0 10px;
+  margin-bottom: 8px;
+}
+
+.hg-corner { display: block; }
+
+.hg-col-head {
+  font-size: 9px;
+  font-family: var(--mono);
+  color: var(--muted);
+  text-align: center;
+  line-height: 13px;
+  white-space: nowrap;
+  overflow: visible; /* 「10月」比 16px 列宽，允许溢出到 4px 列距里 */
+}
+
+.hg-row-head {
+  font-size: 9px;
+  font-family: var(--mono);
+  color: var(--muted);
+  align-self: center;
+  text-align: right;
+  padding-right: 2px;
+  line-height: 1;
+}
+
+.h-cell {
+  aspect-ratio: 1;
+  width: 16px;
+  height: 16px;
+  display: block;
+  background: var(--surface-3);
+  cursor: default;
+  border: 1px solid transparent;
+}
+.h-cell.future { background: transparent; }
+.h-cell.today { border-color: var(--text); }
+
+/* 深度（用 opacity 调，颜色由分类类决定） */
+.h-cell.l1 { opacity: 0.4; }
+.h-cell.l2 { opacity: 0.65; }
+.h-cell.l3 { opacity: 1; }
+.h-cell.l4 { box-shadow: inset 0 0 0 1px var(--text); }
+
+/* 分类颜色（含无分类数据的中性色） */
+.h-cell.c-记录 { background: #0969DA; }
+.h-cell.c-文学 { background: #8250DF; }
+.h-cell.c-理论 { background: #1A7F64; }
+.h-cell.c-学习 { background: #3FB950; }
+.h-cell.c-生活 { background: #F0883E; }
+.h-cell.c-评论 { background: #CF222E; }
+.h-cell.c-草稿 { background: #6E7781; }
+.h-cell.c-其他 { background: #6E7781; }
+html[data-theme="dark"] .h-cell.c-草稿,
+html[data-theme="dark"] .h-cell.c-其他 { background: #8B949E; }
+
+/* 深度级别为 0 但写过 0 字的日子保持灰底（.l0 不改色） */
+
+.heat-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  font-size: 10px;
+  color: var(--muted);
+}
+.heat-legend .h-cell {
+  width: 12px;
+  height: 12px;
+  min-height: 0;
+  aspect-ratio: auto;
+  flex: none;
+}
+.heat-legend .l1 { background: var(--accent); opacity: 0.4; }
+.heat-legend .l2 { background: var(--accent); opacity: 0.65; }
+.heat-legend .l3 { background: var(--accent); }
+.heat-legend .l4 { background: var(--accent); box-shadow: inset 0 0 0 1px var(--text); }
+.heat-legend-sep { width: 8px; }
+.h-cell:hover { outline: 1px solid var(--text); }
+
+.t-time { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+.t-time b { color: var(--text); font-family: var(--mono); font-size: 13px; }
+.t-timebar {
+  margin: 8px 0;
+  height: 6px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.t-timebar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .4s ease; }
+
+.t-block .field-row { margin-bottom: 8px; }
+.t-block input[type="time"],
+.t-block input[type="number"] {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  outline: none;
+  font-size: 12px;
+}
+.t-block input:focus { border-color: var(--accent); }
+.t-block .btn-sm { flex: none; }
+
+/* ═══════════════════════ 写作冲刺条 ═══════════════════════ */
+
+.session-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  height: 34px;
+  padding: 0 16px;
+  background: var(--accent-soft);
+  border-bottom: 1px solid var(--border);
+}
+html[data-theme="dark"] .session-bar { background: var(--surface-3); }
+.session-bar[hidden] { display: none; }
+.sb-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  flex: none;
+}
+.sb-bar { flex: 1; height: 5px; background: var(--surface-3); overflow: hidden; }
+.sb-bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .4s ease; }
+.sb-text { font-size: 10.5px; color: var(--text-2); flex: none; }
+
+/* ═══════════════════════ 专注模式 ═══════════════════════ */
+
+body.focus-mode .rail,
+body.focus-mode .inspector { display: none; }
+body.focus-mode .shell { grid-template-columns: minmax(0, 1fr); }
+body.focus-mode .topbar {
+  background: var(--surface-2);
+}
+body.focus-mode .vditor-host .vditor-ir pre.vditor-reset {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 40px 45vh !important;
+}
+body.focus-mode .statusbar { opacity: 0.7; }
+
+.stat-streak.hot { color: var(--warn); }
+.stat-streak.done { color: var(--ok); font-weight: 700; }
+
+/* ═══════════════════════ 草稿弹窗 ═══════════════════════ */
+
+.modal-wide { width: 720px; }
+.modal-sub { font-size: 10.5px; color: var(--muted); margin-left: 6px; font-weight: 400; }
+.draft-area {
+  width: 100%;
+  height: 380px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  outline: none;
+  resize: vertical;
+  font-size: 14px;
+  line-height: 1.85;
+  font-family: var(--sans);
+}
+.draft-area:focus { border-color: var(--accent); }
+.draft-foot-info {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0 10px;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+.modal-foot .grow { flex: 1; }
+.modal-foot .btn-danger { margin-right: auto; }
+
+/* 标签 chips 可点击移除 */
+.chips.tags { padding: 0 0 8px; }
+.chip.tag { cursor: pointer; }
+.chip.tag:hover { border-color: var(--danger); color: var(--danger); }
+
+/* ═══════════════════════ 其它收尾 ═══════════════════════ */
+
+/* 原生 confirm/prompt 很不搭，但保留功能；这里只统一选框颜色 */
+input[type="checkbox"] { border-radius: 0 !important; }
+
+/* 窄屏：侧栏设置不再挤占，专注模式优先级最高 */
+body.focus-mode .rail { display: none !important; }

@@ -9,10 +9,10 @@
 </head>
 <body>
 
-<div class="shell">
+<div class="shell" id="shell">
 
-  <!-- ═════════ 左：文章列表 ═════════ -->
-  <aside class="rail">
+  <!-- ═════════ 左：导航 + 文章列表 / 今日 ═════════ -->
+  <aside class="rail" id="rail">
     <div class="rail-head">
       <div class="brand">
         <span class="brand-main">STUDIO</span>
@@ -23,19 +23,103 @@
       </button>
     </div>
 
-    <div class="rail-search">
-      <input id="search" type="text" placeholder="搜索标题 / 正文 / 文件名" autocomplete="off" />
-      <button class="icon-btn ghost" id="btnClearSearch" title="清空">✕</button>
+    <nav class="rail-nav">
+      <button class="nav-btn active" data-view="posts">文章<kbd>1</kbd></button>
+      <button class="nav-btn" data-view="today">今日<kbd>2</kbd><i class="nav-badge" id="navBadge" hidden></i></button>
+      <button class="nav-btn" data-view="drafts">草稿箱<kbd>3</kbd><b class="nav-count" id="navDraftCount" hidden>0</b></button>
+    </nav>
+
+    <!-- 视图：文章 -->
+    <div class="rail-view active" data-view="posts">
+      <div class="rail-search">
+        <input id="search" type="text" placeholder="搜索标题 / 正文 / 文件名" autocomplete="off" />
+        <button class="icon-btn ghost" id="btnClearSearch" title="清空">✕</button>
+      </div>
+
+      <div class="chips" id="catChips"></div>
+
+      <div class="rail-count"><span id="listCount">0 篇</span><span id="listFilter"></span></div>
+
+      <ul class="post-list" id="postList"></ul>
+
+      <div class="rail-foot">
+        <button class="btn btn-accent block" id="btnNew">＋ 新建文章</button>
+      </div>
     </div>
 
-    <div class="chips" id="catChips"></div>
+    <!-- 视图：今日 -->
+    <div class="rail-view" data-view="today">
+      <div class="today-scroll">
+        <section class="t-block">
+          <div class="t-ring-wrap">
+            <svg class="ring" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="52" class="ring-bg" />
+              <circle cx="60" cy="60" r="52" class="ring-fg" id="ringFg" />
+            </svg>
+            <div class="ring-center">
+              <b id="tTodayWords">0</b>
+              <span id="tTodayGoal">/ 500 字</span>
+            </div>
+          </div>
+          <p class="t-tip" id="tTip">还没开始，写一句也算。</p>
+          <button class="btn btn-accent block btn-sm" id="btnStartWrite">开始写</button>
+        </section>
 
-    <div class="rail-count"><span id="listCount">0 篇</span><span id="listFilter"></span></div>
+        <section class="t-stats">
+          <div class="t-stat"><b id="tStreak">0</b><span>连续天数</span></div>
+          <div class="t-stat"><b id="tLongest">0</b><span>最长记录</span></div>
+          <div class="t-stat"><b id="tRate">0%</b><span>近 30 天</span></div>
+          <div class="t-stat"><b id="tTotal">0</b><span>累计字数</span></div>
+        </section>
 
-    <ul class="post-list" id="postList"></ul>
+        <section class="t-block">
+          <h4 class="t-h4">写作热力图 <span class="t-h4-sub" id="tHeatRange"></span></h4>
+          <div class="heat-grid" id="tHeat"></div>
+          <div class="heat-legend">
+            <span class="mono">少</span>
+            <i class="h-cell l1"></i><i class="h-cell l2"></i><i class="h-cell l3"></i><i class="h-cell l4"></i>
+            <span class="mono">多</span>
+          </div>
+          <div class="heat-legend" id="tHeatCats"></div>
+        </section>
 
-    <div class="rail-foot">
-      <button class="btn btn-accent block" id="btnNew">＋ 新建文章</button>
+        <section class="t-block">
+          <h4 class="t-h4">今天的时间</h4>
+          <div class="t-time">
+            <span>专注 <b id="tFocus">0</b> 分钟</span>
+            <span>目标 <b id="tGoalWord">500</b> 字</span>
+          </div>
+          <div class="t-timebar"><i id="tTimeFill"></i></div>
+          <p class="t-tip" id="tTimeTip">—</p>
+        </section>
+
+        <section class="t-block">
+          <h4 class="t-h4">每日提醒</h4>
+          <label class="check"><input type="checkbox" id="cRemind" /> 到点提醒我写作</label>
+          <div class="field-row">
+            <input id="fRemindAt" type="time" class="mono" />
+            <button class="btn btn-sm" id="btnRemindTest">试一下</button>
+          </div>
+          <p class="t-tip">提醒由 Studio 进程发出（系统通知），关掉 Studio 就不会提醒。</p>
+        </section>
+
+        <section class="t-block">
+          <h4 class="t-h4">每天写多少</h4>
+          <div class="field-row">
+            <input id="fDailyGoal" type="number" min="50" step="50" class="mono" />
+            <button class="btn btn-sm" id="btnSaveGoal">保存</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- 视图：草稿箱 -->
+    <div class="rail-view" data-view="drafts">
+      <div class="rail-count"><span>临时草稿</span><span>存在本地 .studio/drafts</span></div>
+      <div class="rail-foot rail-foot-top">
+        <button class="btn block" id="btnNewDraft">＋ 随手写一段</button>
+      </div>
+      <ul class="post-list" id="draftList"></ul>
     </div>
   </aside>
 
@@ -48,6 +132,10 @@
       </div>
       <div class="topbar-actions">
         <span class="save-state" id="saveState">未修改</span>
+        <button class="btn" id="btnFocus" title="专注模式 (Ctrl+Shift+F)">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+          <span id="focusLabel">专注</span>
+        </button>
         <button class="btn" id="btnPreview" title="启动 astro dev 本地预览">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><path d="M3 12s3.6-6.5 9-6.5S21 12 21 12s-3.6 6.5-9 6.5S3 12 3 12z"/><circle cx="12" cy="12" r="2.4"/></svg>
           预览
@@ -59,6 +147,13 @@
         </button>
       </div>
     </header>
+
+    <div class="session-bar" id="sessionBar" hidden>
+      <span class="sb-label">写作冲刺</span>
+      <div class="sb-bar"><i id="sbFill"></i></div>
+      <span class="sb-text mono" id="sbText">0 / 200 字</span>
+      <button class="btn btn-sm" id="btnSessionStop">结束</button>
+    </div>
 
     <div class="editor-host">
       <div id="vditor" class="vditor-host"></div>
@@ -88,12 +183,16 @@
       <span id="statWords">0 字</span>
       <span class="sep"></span>
       <span id="statSaved">已保存</span>
+      <span class="sep"></span>
+      <span id="statStreak" class="stat-streak">—</span>
       <span class="grow"></span>
+      <span id="statToday" class="mono"></span>
+      <span class="sep"></span>
       <span id="statEnv" class="mono"></span>
     </footer>
   </main>
 
-  <!-- ═════════ 右：属性 / 发布 ═════════ -->
+  <!-- ═════════ 右：属性 / 发布 / 帮助 ═════════ -->
   <aside class="inspector" id="inspector">
     <div class="insp-tabs">
       <button class="insp-tab active" data-tab="meta">属性</button>
@@ -160,9 +259,22 @@
 
         <label class="check"><input type="checkbox" id="fHot" /> 标记为热门资源</label>
 
+        <div class="divider"></div>
+
+        <div class="field">
+          <label>选题标签（本地，不发布）</label>
+          <div class="chips tags" id="tagChips"></div>
+          <div class="field-row">
+            <input id="fNewTag" placeholder="加一个标签后回车" />
+            <button class="btn btn-sm" id="btnAddTag">加</button>
+          </div>
+          <p class="hint">用来给自己归类「待写 / 想写 / 系列」，只存在本机。</p>
+        </div>
+
         <div class="insp-actions">
           <button class="btn btn-sm" id="btnReveal">打开目录</button>
           <button class="btn btn-sm" id="btnDuplicate">复制一份</button>
+          <button class="btn btn-sm" id="btnToDraft">存草稿</button>
           <button class="btn btn-sm btn-danger" id="btnDelete">删除</button>
         </div>
       </div>
@@ -172,7 +284,7 @@
         <div class="field">
           <label>提交信息</label>
           <input id="fCommit" placeholder="post: 更新文章" />
-          <p class="hint">留空则使用 <span class="mono">post: 更新文章</span></p>
+          <p class="hint">留空则使用 <span class="mono">post: 更新文章 标题</span></p>
         </div>
 
         <label class="check"><input type="checkbox" id="cAutoBuild" checked /> 发布前构建（astro build）</label>
@@ -197,6 +309,8 @@
           <div><span>分支</span><b id="kBranch" class="mono">—</b></div>
           <div><span>加密文章</span><b id="kProtected" class="mono">—</b></div>
           <div><span>构建工具</span><b id="kRuntime" class="mono">—</b></div>
+          <div><span>文章总数</span><b id="kPosts" class="mono">—</b></div>
+          <div><span>最近提交</span><b id="kCommit" class="mono">—</b></div>
         </div>
       </div>
 
@@ -208,15 +322,45 @@
             <li><kbd>Ctrl</kbd>+<kbd>S</kbd> 保存</li>
             <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> 一键发布</li>
             <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> 新建文章</li>
+            <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> 专注模式</li>
+            <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> 存草稿</li>
             <li><kbd>Ctrl</kbd>+<kbd>K</kbd> 聚焦搜索</li>
+            <li><kbd>Esc</kbd> 退出专注 / 关弹窗</li>
+          </ul>
+        </div>
+        <div class="help-block">
+          <h4>专注模式</h4>
+          <ul>
+            <li>隐藏两侧栏，只留正文，进入后底部出现「写作冲刺」进度条。</li>
+            <li>冲刺目标是 <span class="mono">每日目标 ÷ 3</span>，随时可手动结束。</li>
+            <li>专注期间每 30 秒自动存一次，断电也不丢。</li>
+          </ul>
+        </div>
+        <div class="help-block">
+          <h4>习惯怎么算</h4>
+          <ul>
+            <li>字数按「净增量」累计：删字会扣，避免刷字数。<b>草稿箱里写的字同样计入每日</b>（算「草稿」区）。</li>
+            <li>连续天数有 <b>7 天宽限</b>：断更不超过 6 天，补写后就接着算，不会清零。</li>
+            <li>热力图（约一个月）：格子颜色 = 当天写得最多的分类（记录蓝 / 文学紫 / 理论青 / 学习绿 / 生活橙 / 评论红 / 草稿灰），颜色深浅 = 当天字数多少。左侧标星期，列头标日期，黑框是今天。悬停看详情。</li>
+            <li>专注时长只统计专注模式下、且 5 分钟内有输入的时间。</li>
+            <li>数据存在 <span class="mono">tools/studio/.studio-habit.json</span>，不同步、不上传。</li>
+          </ul>
+        </div>
+        <div class="help-block">
+          <h4>草稿箱</h4>
+          <ul>
+            <li>碎片想法先扔进草稿箱，不用先想标题和文件名。</li>
+            <li>草稿里打的字<b>计入每日字数</b>；从文章转存草稿不重复计。</li>
+            <li>草稿点「发成文章」时才选分类、生成 md。</li>
+            <li>草稿存在 <span class="mono">tools/studio/drafts/</span>。</li>
           </ul>
         </div>
         <div class="help-block">
           <h4>写作用法</h4>
           <ul>
             <li>正文即 <span class="mono">src/content/posts/*.md</span> 的 body，直接写 Markdown。</li>
-            <li>数学公式用 <span class="mono">$…$</span>、<span class="mono">$$…$$</span> 或 <span class="mono">\(…\)</span>、<span class="mono">\[…]</span>。</li>
-            <li>图片可直接拖进编辑器，自动存到 <span class="mono">public/uploads/</span>。</li>
+            <li>公式 <span class="mono">$…$</span> / <span class="mono">$$…$$</span> 编辑期内联渲染，保存时自动转回 <span class="mono">\(…\)</span> / <span class="mono">\[…]</span>。</li>
+            <li>图片可直接拖进编辑器，自动存到 <span class="mono">public/uploads/YYYYMM/</span>。</li>
           </ul>
         </div>
         <div class="help-block">
@@ -259,6 +403,26 @@
     <div class="modal-foot">
       <button class="btn" id="btnNewCancel">取消</button>
       <button class="btn btn-accent" id="btnNewCreate">创建</button>
+    </div>
+  </div>
+</div>
+
+<!-- 草稿编辑弹窗 -->
+<div class="modal-mask" id="draftMask" hidden>
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <h3>草稿 <span class="mono modal-sub" id="draftMeta"></span></h3>
+      <button class="icon-btn ghost" id="btnDraftClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <textarea id="draftText" class="draft-area" placeholder="想到什么就先写下来，不用管顺序和标题…"></textarea>
+      <div class="draft-foot-info"><span id="draftWords" class="mono">0 字</span><span id="draftState" class="mono"></span></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger btn-sm" id="btnDraftDelete">删除</button>
+      <span class="grow"></span>
+      <button class="btn" id="btnDraftSave">保存草稿</button>
+      <button class="btn btn-accent" id="btnDraftToPost">发成文章</button>
     </div>
   </div>
 </div>

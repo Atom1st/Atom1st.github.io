@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CCS 交互演示</title>
+<link rel="stylesheet" href="ccs.css">
+</head>
+<body>
+
+<div class="scroll-progress"></div>
+
+<header class="header">
+  <button class="menu-toggle" id="menuToggle" aria-label="菜单">☰</button>
+  <span class="brand">CCS Demo</span>
+  <nav class="nav-bar">
+    <a href="#" class="is-active">总览</a>
+    <a href="#forms">表单</a>
+    <a href="#overlay">浮层</a>
+  </nav>
+  <span class="spacer"></span>
+  <button class="btn btn-sm btn-secondary" id="modalTrigger">打开模态</button>
+  <button class="theme-toggle" id="themeToggle" aria-label="切换主题">◐</button>
+</header>
+
+<div class="layout-side">
+  <aside class="sidebar is-open" id="sidebar">
+    <div class="profile">
+      <div class="avatar avatar-lg" style="margin:0 auto 12px;display:flex;align-items:center;justify-content:center;background:#0969DA;color:#fff;font-weight:800;border:0;width:88px;height:88px;">CCS</div>
+      <div class="name">交互演示</div>
+      <div class="bio">可点击 · 可切换 · 可输入</div>
+    </div>
+    <nav class="side-nav">
+      <div class="nav-title">跳转</div>
+      <a href="#btns" class="is-active">按钮</a>
+      <a href="#forms">表单</a>
+      <a href="#overlay">浮层</a>
+      <a href="#misc">杂项</a>
+    </nav>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+
+  <main class="main">
+    <div class="page">
+
+      <div class="page-head">
+        <span class="eyebrow">Live Demo</span>
+        <h1 class="page-title">CCS 交互演示</h1>
+        <p class="page-sub">所有文档中提到的交互在这里都可实际操作验证。</p>
+      </div>
+
+      <!-- 按钮 -->
+      <h2 id="btns">按钮状态</h2>
+      <div class="inline mb-4">
+        <button class="btn" id="loadingBtn">点我变加载</button>
+        <button class="btn btn-outline" data-toast="success">弹成功 Toast</button>
+        <button class="btn btn-danger" data-toast="error">弹错误 Toast</button>
+      </div>
+      <div class="inline mb-8">
+        <div class="btn-group" id="segGroup">
+          <button class="btn btn-secondary is-active" data-seg>日</button>
+          <button class="btn btn-secondary" data-seg>周</button>
+          <button class="btn btn-secondary" data-seg>月</button>
+        </div>
+        <span class="text-muted text-sm">选中：<b id="segValue">日</b></span>
+      </div>
+
+      <!-- 筛选 -->
+      <h2 id="forms">筛选与表单</h2>
+      <div class="filters mb-4" id="filterBar">
+        <a href="#" class="is-active" data-filter="">全部</a>
+        <a href="#" data-filter="记录">记录</a>
+        <a href="#" data-filter="文学">文学</a>
+        <a href="#" data-filter="学习">学习</a>
+      </div>
+      <p class="page-sub mb-6" style="padding-left:0">当前：<b id="filterLabel">全部</b></p>
+
+      <div class="card-list mb-8" id="filterList">
+        <div class="card cat-blue" data-cat="记录">
+          <h3 class="card-title">勾股定理的三种证明</h3>
+          <div class="card-meta"><span class="chip">记录</span></div>
+        </div>
+        <div class="card cat-purple" data-cat="文学">
+          <h3 class="card-title">秋夜读书记</h3>
+          <div class="card-meta"><span class="chip">文学</span></div>
+        </div>
+        <div class="card cat-orange" data-cat="学习">
+          <h3 class="card-title">复杂度速查表</h3>
+          <div class="card-meta"><span class="chip">学习</span></div>
+        </div>
+      </div>
+
+      <form class="form-grid mb-8" style="max-width:720px" id="demoForm" novalidate>
+        <div class="field">
+          <label class="label" for="dTitle">标题<span class="req">*</span></label>
+          <input id="dTitle" name="title" type="text" placeholder="请输入标题">
+          <span class="field-error is-hidden" id="dTitleErr">标题不能为空。</span>
+        </div>
+        <div class="field">
+          <label class="label" for="dCat">分类</label>
+          <select id="dCat" name="cat">
+            <option>记录</option><option>文学</option><option>学习</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label" for="dSearch">搜索</label>
+          <div class="search"><input id="dSearch" type="search" placeholder="搜索文章…"></div>
+        </div>
+        <div class="field">
+          <label class="label" for="dPwd">密码</label>
+          <input id="dPwd" type="password" placeholder="••••••">
+          <span class="help-text">用于加密正文，不参与校验。</span>
+        </div>
+        <div class="field full">
+          <label class="label">选项</label>
+          <div class="inline" style="gap:24px">
+            <label class="check"><input type="checkbox" checked> 原创</label>
+            <label class="radio"><input type="radio" name="acc" checked> 公开</label>
+            <label class="radio"><input type="radio" name="acc"> 受保护</label>
+            <label class="switch"><input type="checkbox" checked><span class="track"></span> 定时发布</label>
+          </div>
+        </div>
+        <div class="field full">
+          <label class="label" for="dRange">进度 <span class="text-muted text-sm" id="rangeValue">60%</span></label>
+          <input id="dRange" type="range" min="0" max="100" value="60">
+          <div class="progress mt-2"><span id="rangeBar" style="width:60%"></span></div>
+        </div>
+        <div class="form-actions full">
+          <button class="btn" type="submit">保存</button>
+          <button class="btn btn-secondary" type="reset">重置</button>
+        </div>
+      </form>
+
+      <!-- 浮层 -->
+      <h2 id="overlay">浮层</h2>
+      <div class="inline mb-8">
+        <div class="dropdown" id="dd">
+          <button class="btn btn-secondary" id="ddTrigger">下拉菜单 ▾</button>
+          <div class="dropdown-menu">
+            <a href="#">编辑</a>
+            <a href="#">复制链接</a>
+            <div class="divider"></div>
+            <button data-toast="warning">删除（弹警告）</button>
+          </div>
+        </div>
+        <span class="badge" data-tip="默认向上弹出">默认 Tooltip</span>
+        <span class="badge" data-tip="向左对齐" data-tip-pos="left">left</span>
+        <span class="badge" data-tip="向右对齐" data-tip-pos="right">right</span>
+      </div>
+
+      <!-- 杂项 -->
+      <h2 id="misc">杂项</h2>
+      <div class="divider-label">骨架屏</div>
+      <div class="stack-sm mb-6" style="max-width:420px">
+        <div class="skeleton" style="width:70%;height:14px"></div>
+        <div class="skeleton" style="width:100%;height:14px"></div>
+        <div class="skeleton" style="width:45%;height:14px"></div>
+      </div>
+
+      <div class="divider-label">代码块复制</div>
+      <div class="code-block mb-6" style="max-width:560px">
+        <button class="copy-btn" data-copy>复制</button>
+        <pre><code>const sum = (a, b) =&gt; a + b;</code></pre>
+      </div>
+
+      <div class="divider-label">密码框</div>
+      <div class="lock-box mb-8">
+        <div class="lock-icon">🔒</div>
+        <h3>文章已加密</h3>
+        <p>输入任意内容后点解锁，模拟成功/失败。</p>
+        <input type="password" id="lockInput" placeholder="请输入密码">
+        <button class="btn" id="lockBtn">解锁</button>
+        <p id="lockMsg" class="field-error is-hidden"></p>
+      </div>
+
+      <div class="divider-label">Toast 容器</div>
+      <p class="text-sm text-muted mb-8">Toast 会出现在右下角（真实位置），点上方按钮触发。</p>
+
+    </div>
+    <footer class="footer">CCS · 交互演示</footer>
+  </main>
+</div>
+
+<!-- 模态 -->
+<div class="modal-mask" id="modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>确认删除</h3>
+      <button class="close" data-close>✕</button>
+    </div>
+    <div class="modal-body">
+      <p>删除后不可恢复，确定继续吗？</p>
+      <div class="notice notice-warning mb-0">这篇文章包含 3 张图片和 1 个 PDF 附件。</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" data-close>取消</button>
+      <button class="btn btn-danger" id="confirmDelete">删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast 容器 -->
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+// ---------- 主题 ----------
+document.getElementById('themeToggle').onclick = function () {
+  var h = document.documentElement;
+  h.setAttribute('data-theme', h.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+};
+
+// ---------- 侧栏抽屉 ----------
+var sb = document.getElementById('sidebar');
+var ov = document.getElementById('overlay');
+document.getElementById('menuToggle').onclick = function () {
+  sb.classList.toggle('is-open');
+  ov.classList.toggle('is-open');
+};
+ov.onclick = function () {
+  sb.classList.remove('is-open');
+  ov.classList.remove('is-open');
+};
+
+// ---------- Toast ----------
+var toastWrap = document.getElementById('toasts');
+function toast(msg, type) {
+  var el = document.createElement('div');
+  el.className = 'toast ' + (type || '');
+  el.textContent = msg;
+  toastWrap.appendChild(el);
+  setTimeout(function () { el.remove(); }, 2600);
+}
+document.querySelectorAll('[data-toast]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var t = b.getAttribute('data-toast');
+    var map = { success: '操作成功', error: '操作失败，请重试', warning: '请谨慎操作' };
+    toast(map[t] || '提示', t);
+  });
+});
+
+// ---------- 加载按钮 ----------
+document.getElementById('loadingBtn').onclick = function () {
+  this.classList.add('is-loading');
+  var self = this;
+  setTimeout(function () { self.classList.remove('is-loading'); toast('已完成', 'success'); }, 1200);
+};
+
+// ---------- 按钮组 ----------
+var segGroup = document.getElementById('segGroup');
+var segValue = document.getElementById('segValue');
+segGroup.querySelectorAll('[data-seg]').forEach(function (b) {
+  b.onclick = function () {
+    segGroup.querySelectorAll('[data-seg]').forEach(function (x) { x.classList.remove('is-active'); });
+    b.classList.add('is-active');
+    segValue.textContent = b.textContent.trim();
+  };
+});
+
+// ---------- 筛选 ----------
+var filterBar = document.getElementById('filterBar');
+var filterLabel = document.getElementById('filterLabel');
+filterBar.querySelectorAll('[data-filter]').forEach(function (a) {
+  a.onclick = function (e) {
+    e.preventDefault();
+    var cat = a.getAttribute('data-filter');
+    filterBar.querySelectorAll('a').forEach(function (x) { x.classList.remove('is-active'); });
+    a.classList.add('is-active');
+    filterLabel.textContent = cat || '全部';
+    document.querySelectorAll('#filterList .card').forEach(function (c) {
+      c.classList.toggle('is-hidden', cat && c.getAttribute('data-cat') !== cat);
+    });
+  };
+});
+
+// ---------- 表单校验 ----------
+var form = document.getElementById('demoForm');
+var dTitle = document.getElementById('dTitle');
+var dTitleErr = document.getElementById('dTitleErr');
+form.addEventListener('submit', function (e) {
+  e.preventDefault();
+  if (!dTitle.value.trim()) {
+    dTitle.classList.add('is-invalid');
+    dTitleErr.classList.remove('is-hidden');
+    dTitle.focus();
+    return;
+  }
+  dTitle.classList.remove('is-invalid');
+  dTitle.classList.add('is-valid');
+  dTitleErr.classList.add('is-hidden');
+  toast('表单校验通过', 'success');
+});
+dTitle.addEventListener('input', function () {
+  if (dTitle.value.trim()) {
+    dTitle.classList.remove('is-invalid');
+    dTitleErr.classList.add('is-hidden');
+  }
+});
+
+// ---------- 滑块联动进度条 ----------
+var dRange = document.getElementById('dRange');
+var rangeValue = document.getElementById('rangeValue');
+var rangeBar = document.getElementById('rangeBar');
+dRange.addEventListener('input', function () {
+  rangeValue.textContent = dRange.value + '%';
+  rangeBar.style.width = dRange.value + '%';
+});
+
+// ---------- 下拉点击式 ----------
+var dd = document.getElementById('dd');
+document.getElementById('ddTrigger').onclick = function (e) {
+  e.stopPropagation();
+  dd.classList.toggle('is-open');
+};
+document.addEventListener('click', function () { dd.classList.remove('is-open'); });
+
+// ---------- 模态 ----------
+var modal = document.getElementById('modal');
+function openModal() { modal.classList.add('is-open'); }
+function closeModal() { modal.classList.remove('is-open'); }
+document.getElementById('modalTrigger').onclick = openModal;
+document.getElementById('confirmDelete').onclick = function () {
+  closeModal();
+  toast('已删除', 'error');
+};
+modal.querySelectorAll('[data-close]').forEach(function (b) { b.onclick = closeModal; });
+modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+
+// ---------- 复制按钮 ----------
+document.querySelectorAll('[data-copy]').forEach(function (btn) {
+  btn.onclick = function () {
+    var code = btn.parentElement.querySelector('code');
+    var text = code ? code.textContent : '';
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function () {
+        btn.textContent = '已复制';
+        setTimeout(function () { btn.textContent = '复制'; }, 1500);
+      });
+    } else {
+      toast('当前环境不支持剪贴板', 'warning');
+    }
+  };
+});
+
+// ---------- 密码框 ----------
+document.getElementById('lockBtn').onclick = function () {
+  var v = document.getElementById('lockInput').value;
+  var msg = document.getElementById('lockMsg');
+  if (v === 'ccs') {
+    msg.classList.add('is-hidden');
+    toast('解锁成功', 'success');
+  } else {
+    msg.textContent = '密码错误，提示：ccs';
+    msg.classList.remove('is-hidden');
+  }
+};
+</script>
+</body>
+</html>

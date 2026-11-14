@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CCS 样式总览</title>
+<link rel="stylesheet" href="ccs.css">
+</head>
+<body>
+
+<header class="header">
+  <button class="menu-toggle" id="menuToggle" aria-label="菜单">☰</button>
+  <span class="brand">CCS</span>
+  <nav class="nav-bar">
+    <a href="#" class="is-active">总览</a>
+    <a href="#">组件</a>
+    <a href="#">排版</a>
+  </nav>
+  <span class="spacer"></span>
+  <button class="theme-toggle" id="themeToggle" aria-label="切换主题">◐</button>
+</header>
+
+<div class="layout-side">
+  <aside class="sidebar is-open" id="sidebar">
+    <div class="profile">
+      <div class="avatar avatar-lg" style="margin:0 auto 12px;display:flex;align-items:center;justify-content:center;background:#0969DA;color:#fff;font-weight:800;border:0;width:88px;height:88px;">CCS</div>
+      <div class="name">Common Component Stylesheet</div>
+      <div class="bio">亮色 · 直角 · 强对比</div>
+    </div>
+    <nav class="side-nav">
+      <div class="nav-title">分类</div>
+      <a href="#" class="is-active"><i class="mark">■</i> 记录</a>
+      <a href="#"><i class="mark">■</i> 文学</a>
+      <a href="#"><i class="mark">■</i> 理论与实践</a>
+      <a href="#"><i class="mark">■</i> 学习笔记</a>
+      <a href="#"><i class="mark">■</i> 生活</a>
+      <a href="#"><i class="mark">■</i> 评论</a>
+    </nav>
+    <ul class="contact-list">
+      <li><i>✉</i><a href="#">2044376627@qq.com</a></li>
+      <li><i>◎</i><a href="#">GitHub</a></li>
+    </ul>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+
+  <main class="main">
+    <div class="page">
+
+      <div class="page-head">
+        <span class="eyebrow">Style Guide</span>
+        <h1 class="page-title">CCS 组件总览</h1>
+        <p class="page-sub">一套亮色为主、直角硬朗、以左侧色条为强调语言的通用样式表。</p>
+      </div>
+
+      <!-- 按钮 -->
+      <h2>按钮</h2>
+      <div class="inline mb-6">
+        <button class="btn">主按钮</button>
+        <button class="btn btn-outline">描边</button>
+        <button class="btn btn-secondary">次级</button>
+        <button class="btn btn-ghost">幽灵</button>
+        <button class="btn btn-success">成功</button>
+        <button class="btn btn-warning">警告</button>
+        <button class="btn btn-danger">危险</button>
+        <button class="btn" disabled>禁用</button>
+        <button class="btn is-loading">加载中</button>
+        <button class="btn btn-sm">小</button>
+        <button class="btn btn-lg">大</button>
+      </div>
+      <div class="inline mb-8">
+        <div class="btn-group">
+          <button class="btn btn-secondary">日</button>
+          <button class="btn btn-secondary is-active">周</button>
+          <button class="btn btn-secondary">月</button>
+        </div>
+        <button class="btn btn-icon btn-secondary" data-tip="图标按钮">★</button>
+        <a class="btn-text" href="#">文本按钮 →</a>
+      </div>
+
+      <!-- 卡片 -->
+      <h2>卡片</h2>
+      <div class="card-grid mb-4">
+        <a class="card cat-blue" href="#">
+          <div class="badge badge-soft mb-2">记录</div>
+          <h3 class="card-title">默认卡片（左色条）</h3>
+          <p class="card-text">勾股定理的三种证明思路，从面积法到相似三角形。</p>
+          <div class="card-meta"><span class="chip">记录</span><span>·</span><span>2026-11-08</span></div>
+        </a>
+        <div class="card card-top cat-purple">
+          <h3 class="card-title">顶部色条</h3>
+          <p class="card-text">.card-top 把强调色移到顶部，适合内容型卡片。</p>
+          <div class="card-tags"><span class="badge badge-purple">原创</span><span class="tag">数学</span></div>
+        </div>
+        <div class="card card-plain">
+          <h3 class="card-title">朴素卡片</h3>
+          <p class="card-text">.card-plain 去掉左侧色条，适合中性内容。</p>
+        </div>
+      </div>
+
+      <div class="card-list mb-8">
+        <a class="card cat-orange" href="#">
+          <h3 class="card-title">列表式卡片 · 标题</h3>
+          <div class="card-meta"><span class="chip">学习</span><span>·</span><span>2026-11-02</span></div>
+        </a>
+        <a class="card cat-teal" href="#">
+          <h3 class="card-title">列表式卡片 · 第二条</h3>
+          <p class="card-text">带一行描述的紧凑条目。</p>
+          <div class="card-meta"><span class="chip">理论</span><span>·</span><span>2026-10-28</span></div>
+        </a>
+      </div>
+
+      <!-- 徽章与状态 -->
+      <h2>徽章 / 标签 / 状态</h2>
+      <div class="inline mb-4">
+        <span class="badge">默认</span>
+        <span class="badge badge-outline">描边</span>
+        <span class="badge badge-muted">中性</span>
+        <span class="badge badge-success">已发布</span>
+        <span class="badge badge-warning">加密</span>
+        <span class="badge badge-danger">下线</span>
+        <span class="badge badge-purple">原创</span>
+        <span class="badge badge-soft">软件</span>
+        <span class="badge badge-dot">在线</span>
+      </div>
+      <div class="inline mb-4">
+        <span class="chip">记录</span>
+        <span class="chip cat-purple">文学</span>
+        <a class="tag" href="#">标签</a>
+        <a class="tag" href="#">TypeScript</a>
+        <span class="count">3</span>
+      </div>
+      <div class="inline mb-8">
+        <span class="status online">在线</span>
+        <span class="status away">离开</span>
+        <span class="status busy">忙碌</span>
+        <span class="status pulse online">同步中</span>
+      </div>
+
+      <!-- 提示框 -->
+      <h2>提示框</h2>
+      <div class="notice mb-4"><strong>默认提示</strong> —— 左侧色条标出语气，正文保持中性可读。</div>
+      <div class="notice notice-success">操作已成功保存。</div>
+      <div class="notice notice-warning">该文章已加密，需要密码才能查看正文。</div>
+      <div class="notice notice-danger">构建失败：缺少 frontmatter 字段 <code>category</code>。</div>
+      <div class="notice notice-info mb-6">资源页中的 PDF 会新窗口打开。</div>
+      <div class="banner mb-8">
+        <div class="banner-body"><h3>横幅提示</h3><p>适合页面顶部的公告、引导文案。</p></div>
+        <button class="banner-close">✕</button>
+      </div>
+
+      <!-- 表单 -->
+      <h2>表单</h2>
+      <div class="form-grid mb-8" style="max-width:720px">
+        <div class="field">
+          <label class="label" for="f1">标题<span class="req">*</span></label>
+          <input id="f1" type="text" placeholder="请输入标题">
+        </div>
+        <div class="field">
+          <label class="label" for="f2">分类</label>
+          <select id="f2"><option>记录</option><option>文学</option><option>学习</option></select>
+        </div>
+        <div class="field">
+          <label class="label" for="f3">密码</label>
+          <input id="f3" type="password" placeholder="••••••">
+          <span class="help-text">用于加密文章正文。</span>
+        </div>
+        <div class="field">
+          <label class="label" for="f4">搜索</label>
+          <div class="search"><input id="f4" type="search" placeholder="搜索文章…"></div>
+        </div>
+        <div class="field full">
+          <label class="label" for="f5">摘要</label>
+          <textarea id="f5" placeholder="一句话简介…"></textarea>
+          <span class="field-error">摘要不能为空。</span>
+        </div>
+        <div class="field full">
+          <div class="inline" style="gap:24px">
+            <label class="check"><input type="checkbox" checked> 原创</label>
+            <label class="radio"><input type="radio" name="acc" checked> 公开</label>
+            <label class="radio"><input type="radio" name="acc"> 受保护</label>
+            <label class="switch"><input type="checkbox" checked><span class="track"></span> 定时发布</label>
+          </div>
+        </div>
+        <div class="form-actions full">
+          <button class="btn">保存</button>
+          <button class="btn btn-secondary">取消</button>
+        </div>
+      </div>
+
+      <!-- 表格 -->
+      <h2>表格</h2>
+      <div class="table-card mb-8">
+        <table>
+          <thead><tr><th>项目</th><th>内容</th><th class="num">数量</th></tr></thead>
+          <tbody>
+            <tr><td>站名</td><td>Guiyihan 的博客</td><td class="num">1</td></tr>
+            <tr><td>技术栈</td><td>Astro + bun</td><td class="num">2</td></tr>
+            <tr><td>部署</td><td>GitHub Pages</td><td class="num">3</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 排版 -->
+      <h2>排版</h2>
+      <article class="article-body mb-8" style="max-width:720px">
+        <p>正文 <a href="#">链接文本</a>、<strong>加粗</strong>、<em>斜体</em>、<code>inline code</code>、<kbd>Ctrl</kbd> + <kbd>S</kbd>。</p>
+        <h3>三级标题</h3>
+        <p>行内公式 $a^2+b^2=c^2$ 与列表：</p>
+        <ul><li>第一项</li><li>第二项</li></ul>
+        <blockquote>引用段落，左侧色条标记。<cite>某某</cite></blockquote>
+        <pre><code>const sum = (a, b) =&gt; a + b;</code></pre>
+      </article>
+
+      <!-- 列表 -->
+      <h2>列表</h2>
+      <ul class="entry-list mb-8">
+        <li class="entry">
+          <div class="entry-body">
+            <div class="entry-title">线性代数讲义.pdf</div>
+            <div class="entry-desc">2026-10-30 · 学习</div>
+          </div>
+          <div class="entry-actions">
+            <a class="btn btn-outline btn-sm" href="#">PDF</a>
+            <a class="btn btn-sm" href="#">查看</a>
+          </div>
+        </li>
+        <li class="entry cat-teal">
+          <div class="entry-body">
+            <div class="entry-title">复杂度速查表</div>
+            <div class="entry-desc">2026-10-12 · 理论</div>
+          </div>
+          <div class="entry-actions"><a class="btn btn-sm" href="#">查看</a></div>
+        </li>
+      </ul>
+
+      <div class="card-grid mb-8">
+        <div class="tile">
+          <div class="avatar" style="width:60px;height:60px"></div>
+          <div><h3>友站名称</h3><p>一句话描述</p><a href="#">https://example.com</a></div>
+        </div>
+        <div class="tile cat-pink">
+          <div class="avatar" style="width:60px;height:60px"></div>
+          <div><h3>另一个友站</h3><p>世界多变而永恒</p><a href="#">https://example.org</a></div>
+        </div>
+      </div>
+
+      <div class="stats mb-8">
+        <div class="stat"><div class="stat-value">128</div><div class="stat-label">文章</div></div>
+        <div class="stat"><div class="stat-value">12</div><div class="stat-label">分类</div></div>
+        <div class="stat"><div class="stat-value">99.9%</div><div class="stat-label">可用性</div></div>
+      </div>
+
+      <ol class="steps mb-8" style="max-width:560px">
+        <li><span class="step-title">写文章</span><p class="step-desc">在 src/content/posts 新建 md。</p></li>
+        <li><span class="step-title">本地预览</span><p class="step-desc">bun run dev 检查排版。</p></li>
+        <li><span class="step-title">发布</span><p class="step-desc">push 到 main 自动部署。</p></li>
+      </ol>
+
+      <ul class="timeline mb-8" style="max-width:520px">
+        <li><span class="time">2026-11-08</span>新增 CCS 样式表</li>
+        <li><span class="time">2026-11-01</span>写作工作台上线</li>
+        <li><span class="time">2026-10-20</span>分类配色体系完成</li>
+      </ul>
+
+      <!-- 导航组件 -->
+      <h2>导航</h2>
+      <ul class="breadcrumb"><li><a href="#">首页</a></li><li><a href="#">文章</a></li><li><span aria-current="page">正文</span></li></ul>
+      <div class="tabs mb-6">
+        <button class="is-active">全部</button><button>原创</button><button>搬运</button>
+      </div>
+      <div class="filters mb-6">
+        <a href="#" class="is-active">全部</a><a href="#">记录</a><a href="#">文学</a><a href="#">学习</a>
+      </div>
+      <nav class="pagination mb-8">
+        <span class="is-disabled">上一页</span><a href="#" class="is-active">1</a><a href="#">2</a><a href="#">3</a><a href="#">下一页</a>
+      </nav>
+
+      <div class="post-nav mb-8" style="max-width:720px">
+        <a href="#"><span class="dir">← 上一篇</span>分类配色体系</a>
+        <a href="#" class="next"><span class="dir">下一篇 →</span>写作工作台</a>
+      </div>
+
+      <!-- 其他 -->
+      <h2>其他组件</h2>
+      <div class="divider-label">分组标题</div>
+      <div class="skeleton mb-4" style="width:60%"></div>
+      <div class="progress mb-4" style="max-width:320px"><span style="width:64%"></span></div>
+      <div class="inline mb-6">
+        <div class="dropdown is-open">
+          <button class="btn btn-secondary">下拉菜单 ▾</button>
+          <div class="dropdown-menu">
+            <a href="#">编辑</a><a href="#">复制链接</a>
+            <div class="divider"></div>
+            <button>删除</button>
+          </div>
+        </div>
+        <span class="badge" data-tip="这是 Tooltip">悬停查看提示</span>
+      </div>
+
+      <div class="lock-box mb-8">
+        <div class="lock-icon">🔒</div>
+        <h3>文章已加密</h3>
+        <p>请输入密码查看内容</p>
+        <input type="password" placeholder="请输入密码" class="mb-4">
+        <button class="btn">解锁</button>
+      </div>
+
+      <div class="toast-wrap" style="position:static;align-items:flex-start">
+        <div class="toast success">保存成功</div>
+        <div class="toast error">保存失败，请重试</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer class="footer">CCS · 亮色直角风格通用样式表</footer>
+
+<script>
+  document.getElementById('themeToggle').addEventListener('click', function () {
+    var h = document.documentElement;
+    h.setAttribute('data-theme', h.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+  document.getElementById('menuToggle').addEventListener('click', function () {
+    document.getElementById('sidebar').classList.toggle('is-open');
+    document.getElementById('overlay').classList.toggle('is-open');
+  });
+  document.getElementById('overlay').addEventListener('click', function () {
+    document.getElementById('sidebar').classList.remove('is-open');
+    this.classList.remove('is-open');
+  });
+</script>
+</body>
+</html>

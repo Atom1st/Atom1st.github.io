@@ -6,6 +6,10 @@
  *
  *   node tools/studio/server.mjs
  *   或双击同目录下的 start.cmd
+ *
+ * 分两大块：
+ *   /api/posts…   文章读写（写的就是 src/content/posts/*.md）
+ *   /api/habit…   写作习惯（每日目标 / 打卡 / 草稿箱 / 定时提醒）
  * ---------------------------------------------------------------
  */
 import http from 'node:http';
@@ -24,6 +28,8 @@ const UPLOAD_DIR = path.join(ROOT, 'public', 'uploads');
 const ENCRYPTED_DIR = path.join(ROOT, 'public', 'encrypted');
 const ARTICLES_JSON = path.join(ROOT, 'src', 'data', 'articles.json');
 const CONFIG_FILE = path.join(__dirname, '.studio.json');
+const HABIT_FILE = path.join(__dirname, '.studio-habit.json');
+const DRAFT_DIR = path.join(__dirname, 'drafts');
 const PORT = Number(process.env.STUDIO_PORT || 7788);
 const HOST = '127.0.0.1';
 
@@ -156,22 +162,47 @@ function yamlScalar(s) {
   return '"' + s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\r?\n/g, '\\n') + '"';
 }
 
+/**
+ * frontmatter 键位顺序。不在表里的键（比如作者自己加的 series、cover）
+ * 按原顺序原样保留在最后 —— 早期的实现只写 FIELD_ORDER 里的字段，
+ * 保存一次就会把别的字段整段吃掉。
+ */
 const FIELD_ORDER = ['title', 'date', 'category', 'description', 'type', 'origin', 'access', 'password', 'hot', 'pdf'];
 
-function buildFrontmatter(meta) {
+function formatYamlValue(key, v) {
+  if (key === 'hot') return v === true ? 'true' : 'false';
+  if (Array.isArray(v)) return '[' + v.map(x => yamlScalar(String(x))).join(', ') + ']';
+  if (typeof v === 'boolean') return v ? 'true' : 'false';
+  return yamlScalar(String(v));
+}
+
+function buildFrontmatter(meta, keepKeys = null) {
   const lines = ['---'];
-  for (const key of FIELD_ORDER) {
+  const done = new Set();
+  // keepKeys = 原文件里已经存在的键；这些即使是默认值也要留着，不能悄悄删掉
+  const inFile = keepKeys || new Set();
+
+  const emit = (key) => {
+    if (done.has(key)) return;
     const v = meta[key];
-    if (v === undefined || v === null || v === '') continue;
-    if (key === 'hot') {
-      if (v === true) lines.push('hot: true');
-      continue;
+    if (v === undefined || v === null || v === '') return;
+    if (key === 'hot' && v !== true) return;
+    // 新建文章时默认值不写进文件，保持作者的极简风格；
+    // 但已有文件里写了的字段要原样保留，否则保存一次就少一行。
+    if (!inFile.has(key)) {
+      if (key === 'type' && v === 'article') return;
+      if (key === 'origin' && v === 'original') return;
+      if (key === 'access' && v === 'public') return;
     }
-    if (key === 'type' && v === 'article') continue;
-    if (key === 'origin' && v === 'original') continue;
-    if (key === 'access' && v === 'public') continue;
-    lines.push(`${key}: ${yamlScalar(String(v))}`);
+    done.add(key);
+    lines.push(`${key}: ${formatYamlValue(key, v)}`);
+  };
+  for (const key of FIELD_ORDER) emit(key);
+  for (const key of Object.keys(meta)) {
+    if (FIELD_ORDER.includes(key) || key === 'slug') continue;
+    emit(key);
   }
+
   lines.push('---');
   return lines.join('\n');
 }
@@ -183,20 +214,38 @@ function cleanBody(body) {
     .replace(/[\s\uFEFF\xA0]+$/, '');
 }
 
-function composeMarkdown(meta, body) {
-  return buildFrontmatter(meta) + '\n\n' + cleanBody(body) + '\n';
+function composeMarkdown(meta, body, { trailingNewline = true, keepKeys = null } = {}) {
+  return buildFrontmatter(meta, keepKeys) + '\n\n' + cleanBody(body) + (trailingNewline ? '\n' : '');
 }
 
+/** 把前端来的日期规整成 YYYY-MM-DD（用于排序/展示），写回磁盘时另走 formatStoredDate */
 function normalizeDate(v) {
   const s = String(v || '').trim();
   const m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
   if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  return new Date().toISOString().slice(0, 10);
+  return localDate();
+}
+
+/**
+ * 写回文件时用的日期串。
+ * 作者原来的写法是 2026-9-11 这种不补零的，如果每次保存都改成 2026-09-11，
+ * 就会平白产生一条 diff —— 同一天就沿用原写法，改天才用标准写法。
+ */
+function formatStoredDate(input, original) {
+  const next = String(input || '').trim();
+  const prev = String(original || '').trim();
+  if (prev && normalizeDate(prev) === normalizeDate(next)) return prev;
+  return normalizeDate(next);
+}
+
+/** 本地日期（不能用 toISOString，UTC+8 凌晨会串到前一天） */
+function localDate(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function countWords(body) {
-  const text = body.replace(/```[\s\S]*?```/g, ' ').replace(/`[^`]*`/g, ' ');
+  const text = String(body || '').replace(/```[\s\S]*?```/g, ' ').replace(/`[^`]*`/g, ' ');
   const cjk = (text.match(/[\u4e00-\u9fa5]/g) || []).length;
   const en = (text.match(/[A-Za-z0-9]+/g) || []).length;
   return cjk + en;
@@ -205,6 +254,7 @@ function countWords(body) {
 /** 把磁盘上的 .md 归一化成前端要的结构 */
 function toArticle(slug, raw, stat) {
   const { meta, body } = parseFrontmatter(raw);
+  const clean = cleanBody(body);
   return {
     slug,
     title: String(meta.title || slug),
@@ -217,8 +267,10 @@ function toArticle(slug, raw, stat) {
     hot: meta.hot === true,
     pdf: String(meta.pdf || ''),
     password: String(meta.password || ''),
-    body: cleanBody(body),
-    words: countWords(cleanBody(body)),
+    body: clean,
+    // 原文件换行风格：保存时照原样还原，git diff 才干净
+    eol: raw.includes('\r\n') ? '\r\n' : '\n',
+    words: countWords(clean),
     mtime: stat ? Math.round(stat.mtimeMs) : 0,
     size: stat ? stat.size : Buffer.byteLength(raw, 'utf8'),
   };
@@ -242,6 +294,9 @@ function assertSlug(slug) {
   if (!slug || !/^[\p{L}\p{N}_\-.]+$/u.test(slug)) {
     throw Object.assign(new Error('文件名只能包含字母、数字、下划线、连字符和点'), { code: 400 });
   }
+  if (slug.startsWith('.') || slug.includes('/') || slug.includes('\\')) {
+    throw Object.assign(new Error('文件名不能以点开头，也不能包含路径分隔符'), { code: 400 });
+  }
 }
 
 /* ══════════════════════════ 简单配置 ══════════════════════════ */
@@ -264,6 +319,232 @@ function writeConfig(patch) {
   const next = { ...readConfig(), ...patch };
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(next, null, 2), 'utf8');
   return next;
+}
+
+/* ══════════════════════════ 写作习惯数据 ══════════════════════════ */
+
+const DEFAULT_HABIT = {
+  dailyGoal: 500,        // 每天目标字数
+  sessionGoal: 200,      // 一次写作冲刺的目标字数
+  remindAt: '21:00',     // 每日提醒时间（HH:MM，空字符串表示关闭）
+  remindersOn: false,
+  startedAt: '',         // 养成计划起始日
+  activeMs: 0,           // 累计有效写作时长（毫秒）
+  lastWriteDate: '',
+  lastNotifyDate: '',
+  days: {},              // { 'YYYY-MM-DD': { words, focused, edits } }
+  notes: '',             // 一句话备忘/心情
+};
+
+function readHabit() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(HABIT_FILE, 'utf8'));
+    return { ...DEFAULT_HABIT, ...raw, days: raw.days && typeof raw.days === 'object' ? raw.days : {} };
+  } catch {
+    return { ...DEFAULT_HABIT, days: {} };
+  }
+}
+
+function writeHabit(next) {
+  fs.writeFileSync(HABIT_FILE, JSON.stringify(next, null, 2), 'utf8');
+  return next;
+}
+
+function habitDay(habit, date) {
+  if (!habit.days[date]) habit.days[date] = { words: 0, focused: 0, edits: 0, slots: {} };
+  if (!habit.days[date].slots) habit.days[date].slots = {};
+  return habit.days[date];
+}
+
+/**
+ * 把 N 个字记到今天，归入指定分类（正文用文章分类，草稿箱记「草稿」）。
+ * slots 就是按分类拆分的字数 —— 热力图的颜色用它决定「这天主要写在哪一区」。
+ */
+function logWords(amount, category = '') {
+  const add = Math.max(0, Math.min(50000, Math.round(Number(amount) || 0)));
+  if (!add) return habitSummary();
+  const habit = readHabit();
+  const key = localDate();
+  const day = habitDay(habit, key);
+  const cat = CATEGORIES.includes(category) || category === '草稿' ? category : '其他';
+  day.words = Math.round(day.words + add);
+  day.edits = (day.edits || 0) + 1;
+  day.slots[cat] = Math.round((day.slots[cat] || 0) + add);
+  habit.lastWriteDate = key;
+  if (!habit.startedAt) habit.startedAt = key;
+  writeHabit(habit);
+  return habitSummary();
+}
+
+/** 热力图数据：最近 N 周（列=周，行=周日～周六），peak = 当天写得最多的分类 */
+function heatData(habit, weeks = 14) {
+  const out = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  // 从「今天所在周的周日」往回推 weeks 周，网格起点必是周日
+  const start = new Date(today);
+  start.setDate(start.getDate() - start.getDay() - (weeks - 1) * 7);
+  for (let i = 0; i < weeks * 7; i++) {
+    const d = new Date(start);
+    d.setDate(d.getDate() + i);
+    const key = localDate(d);
+    const day = habit.days[key];
+    const slots = day?.slots || {};
+    let peak = '', peakWords = 0;
+    for (const [cat, w] of Object.entries(slots)) {
+      if (w > peakWords) { peakWords = w; peak = cat; }
+    }
+    out.push({
+      date: key,
+      words: day?.words || 0,
+      focused: day?.focused || 0,
+      peak, // '' 表示当天没写
+      future: d > today,
+    });
+  }
+  return out;
+}
+
+/** 连续达标天数：7 天内断更可续（只要断档不超过 6 天，接着往前数） */
+function calcStreak(habit) {
+  const goal = Math.max(1, Number(habit.dailyGoal) || 1);
+  const GRACE = 7; // 距上次达标不超过 7 天就算延续
+  let streak = 0;
+  let lastHit = null;
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  // 今天还没达标不算断，从昨天接着数
+  if ((habit.days[localDate(d)]?.words || 0) < goal) d.setDate(d.getDate() - 1);
+  for (let i = 0; i < 4000; i++) {
+    const key = localDate(d);
+    if ((habit.days[key]?.words || 0) >= goal) {
+      if (lastHit) {
+        const gap = Math.round((lastHit - d) / 86400000);
+        if (gap > GRACE) break;
+      }
+      streak++;
+      lastHit = new Date(d);
+    } else if (lastHit) {
+      const gap = Math.round((lastHit - d) / 86400000);
+      if (gap > GRACE) break;
+    }
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
+
+function calcLongest(habit) {
+  const goal = Math.max(1, Number(habit.dailyGoal) || 1);
+  const keys = Object.keys(habit.days).sort();
+  let best = 0, cur = 0, prev = null;
+  for (const k of keys) {
+    const ok = (habit.days[k].words || 0) >= goal;
+    if (!ok) { cur = 0; prev = k; continue; }
+    const d = new Date(k + 'T00:00:00');
+    if (prev) {
+      const p = new Date(prev + 'T00:00:00');
+      const gap = Math.round((d - p) / 86400000);
+      cur = gap === 1 ? cur + 1 : 1;
+    } else cur = 1;
+    best = Math.max(best, cur);
+    prev = k;
+  }
+  return best;
+}
+
+function habitSummary() {
+  const habit = readHabit();
+  const todayKey = localDate();
+  const day = habit.days[todayKey] || { words: 0, focused: 0, edits: 0 };
+  const goal = Math.max(1, Number(habit.dailyGoal) || 1);
+
+  // 最近 7 天（含今天）
+  const week = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    const key = localDate(d);
+    week.push({ date: key, words: habit.days[key]?.words || 0, focused: habit.days[key]?.focused || 0 });
+  }
+
+  // 累计
+  let totalWords = 0, totalDays = 0;
+  for (const k of Object.keys(habit.days)) {
+    const w = habit.days[k].words || 0;
+    totalWords += w;
+    if (w > 0) totalDays++;
+  }
+
+  // 近 30 天打卡率
+  let hit = 0;
+  for (let i = 0; i < 30; i++) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    if ((habit.days[localDate(d)]?.words || 0) >= goal) hit++;
+  }
+
+  return {
+    ...habit,
+    today: { date: todayKey, words: day.words || 0, focused: day.focused || 0, goal, done: (day.words || 0) >= goal },
+    week,
+    heat: heatData(habit),
+    streak: calcStreak(habit),
+    longest: calcLongest(habit),
+    totalWords,
+    totalDays,
+    rate30: Math.round((hit / 30) * 100),
+  };
+}
+
+/* ══════════════════════════ 草稿箱 ══════════════════════════ */
+
+async function ensureDraftDir() {
+  await fsp.mkdir(DRAFT_DIR, { recursive: true });
+}
+
+async function listDrafts() {
+  await ensureDraftDir();
+  const files = (await fsp.readdir(DRAFT_DIR)).filter(f => f.endsWith('.json'));
+  const out = [];
+  for (const f of files) {
+    try {
+      const d = JSON.parse(await fsp.readFile(path.join(DRAFT_DIR, f), 'utf8'));
+      out.push({
+        id: d.id || path.basename(f, '.json'),
+        text: d.text || '',
+        words: countWords(d.text),
+        from: d.from || '',
+        updatedAt: d.updatedAt || 0,
+      });
+    } catch { /* 坏文件跳过 */ }
+  }
+  out.sort((a, b) => b.updatedAt - a.updatedAt);
+  return out;
+}
+
+async function saveDraft(body) {
+  await ensureDraftDir();
+  const rawId = String(body.id || '').trim();
+  const id = /^[a-z0-9\-]{6,40}$/i.test(rawId) ? rawId : `d${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  const data = {
+    id,
+    text: String(body.text || ''),
+    from: String(body.from || '').slice(0, 80),
+    updatedAt: Date.now(),
+  };
+  await fsp.writeFile(path.join(DRAFT_DIR, `${id}.json`), JSON.stringify(data, null, 2), 'utf8');
+  return data;
+}
+
+async function deleteDraft(id) {
+  if (!/^[a-z0-9\-]{6,40}$/i.test(String(id || ''))) {
+    throw Object.assign(new Error('草稿 id 非法'), { code: 400 });
+  }
+  const p = path.join(DRAFT_DIR, `${id}.json`);
+  if (fs.existsSync(p)) await fsp.unlink(p);
+  return { ok: true };
 }
 
 /* ══════════════════════════ 进程执行 ══════════════════════════ */
@@ -304,21 +585,41 @@ function gitBranch() {
   return r.status === 0 ? String(r.stdout || '').trim() || 'main' : 'main';
 }
 
+function gitLastCommit() {
+  if (!GIT) return null;
+  const r = spawnSync(GIT, ['log', '-1', '--pretty=%s§%cr'], { cwd: ROOT, encoding: 'utf8', windowsHide: true });
+  if (r.status !== 0) return null;
+  const [subject, when] = String(r.stdout || '').trim().split('§');
+  return { subject: subject || '', when: when || '' };
+}
+
 /* ══════════════════════════ 本地预览进程 ══════════════════════════ */
 
 let previewProc = null;
+let previewLog = [];
 
 function startPreview() {
   if (previewProc) return { running: true, port: 4321, pid: previewProc.pid };
   const [exe, args] = cmd('dev');
+  previewLog = ['▶ 启动 astro dev …'];
   previewProc = spawn(exe, args, {
     cwd: ROOT,
     windowsHide: true,
     env: { ...process.env, FORCE_COLOR: '0' },
-    stdio: 'ignore',
   });
-  previewProc.on('close', () => { previewProc = null; });
-  previewProc.on('error', () => { previewProc = null; });
+  const push = (b) => {
+    String(b.toString('utf8')).split(/\r?\n/).forEach(l => {
+      const line = l.replace(/\x1b\[[0-9;]*m/g, '').trimEnd();
+      if (line) { previewLog.push(line); if (previewLog.length > 200) previewLog.shift(); }
+    });
+  };
+  previewProc.stdout?.on('data', push);
+  previewProc.stderr?.on('data', push);
+  previewProc.on('close', (code) => {
+    previewLog.push(`■ 预览已退出（${code}）`);
+    previewProc = null;
+  });
+  previewProc.on('error', (e) => { previewLog.push('✗ ' + e.message); previewProc = null; });
   return { running: true, port: 4321, pid: previewProc.pid };
 }
 
@@ -477,6 +778,7 @@ async function handleApi(req, res, url) {
 
   /* ---- 元信息 ---- */
   if (seg === 'meta' && method === 'GET') {
+    const posts = await listArticles();
     return sendJson(res, 200, {
       root: ROOT,
       port: PORT,
@@ -484,10 +786,13 @@ async function handleApi(req, res, url) {
       git: GIT,
       hasModules: HAS_MODULES,
       branch: gitBranch(),
+      lastCommit: gitLastCommit(),
       categories: CATEGORIES,
       types: TYPES,
       origins: ORIGINS,
       accesses: ACCESSES,
+      totalPosts: posts.length,
+      totalWords: posts.reduce((s, p) => s + p.words, 0),
       protectedFiles: fs.existsSync(ENCRYPTED_DIR) ? (await fsp.readdir(ENCRYPTED_DIR)).filter(f => f.endsWith('.json')).length : 0,
       hasIndex: fs.existsSync(ARTICLES_JSON),
       preview: { running: !!previewProc, port: 4321 },
@@ -502,6 +807,99 @@ async function handleApi(req, res, url) {
       const body = await readJson(req);
       return sendJson(res, 200, writeConfig(body || {}));
     }
+  }
+
+  /* ---- 写作习惯 ---- */
+  if (seg === 'habit') {
+    const action = parts[2] || '';
+
+    if (!action && method === 'GET') return sendJson(res, 200, habitSummary());
+
+    if (action === 'settings' && method === 'POST') {
+      const body = await readJson(req);
+      const habit = readHabit();
+      if (body.dailyGoal !== undefined) habit.dailyGoal = Math.max(50, Math.min(20000, Number(body.dailyGoal) || 500));
+      if (body.sessionGoal !== undefined) habit.sessionGoal = Math.max(50, Math.min(5000, Number(body.sessionGoal) || 200));
+      if (body.remindAt !== undefined) {
+        const t = String(body.remindAt || '').trim();
+        habit.remindAt = /^\d{1,2}:\d{2}$/.test(t) ? t : '';
+      }
+      if (body.remindersOn !== undefined) habit.remindersOn = !!body.remindersOn;
+      if (body.notes !== undefined) habit.notes = String(body.notes || '').slice(0, 300);
+      if (!habit.startedAt) habit.startedAt = localDate();
+      writeHabit(habit);
+      return sendJson(res, 200, habitSummary());
+    }
+
+    if (action === 'log' && method === 'POST') {
+      const body = await readJson(req);
+      // words 兼容两种传法：数字（不分区），或 { 分类: 字数 } 拆分表
+      if (body.cats && typeof body.cats === 'object') {
+        for (const [cat, w] of Object.entries(body.cats)) logWords(w, cat);
+      } else {
+        logWords(body.words, body.category);
+      }
+      const minutes = Math.max(0, Math.min(600, Number(body.focused) || 0));
+      if (minutes > 0) {
+        const habit = readHabit();
+        const key = localDate();
+        const day = habitDay(habit, key);
+        day.focused = Math.round((day.focused || 0) + minutes);
+        habit.activeMs = (habit.activeMs || 0) + minutes * 60000;
+        writeHabit(habit);
+        return sendJson(res, 200, habitSummary());
+      }
+      return sendJson(res, 200, habitSummary());
+    }
+
+    if (action === 'reset-today' && method === 'POST') {
+      const habit = readHabit();
+      delete habit.days[localDate()];
+      writeHabit(habit);
+      return sendJson(res, 200, habitSummary());
+    }
+
+    if (action === 'run-reminder' && method === 'POST') {
+      const h = habitSummary();
+      const goal = h.today.goal;
+      const words = h.today.words;
+      const ok = notify(
+        words >= goal ? '今天的写作目标已达成了 ✓' : '该写点东西了',
+        words >= goal
+          ? `今天写了 ${words} 字，连续 ${h.streak} 天。`
+          : `今天写了 ${words} / ${goal} 字，回 Studio 写 10 分钟。`,
+      );
+      return sendJson(res, 200, { ok, notified: ok });
+    }
+  }
+
+  /* ---- 草稿箱 ---- */
+  if (seg === 'drafts') {
+    if (!id) {
+      if (method === 'GET') return sendJson(res, 200, await listDrafts());
+      if (method === 'POST') {
+        const body = await readJson(req);
+        // 草稿字数也计入每日写作：按净增量记（改字、删字会互相抵消）
+        const rawId = String(body.id || '').trim();
+        let before = 0;
+        if (/^[a-z0-9\-]{6,40}$/i.test(rawId)) {
+          try {
+            const prev = JSON.parse(await fsp.readFile(path.join(DRAFT_DIR, `${rawId}.json`), 'utf8'));
+            before = countWords(prev.text);
+          } catch { /* 新草稿 */ }
+        }
+        const d = await saveDraft(body || {});
+        const delta = countWords(d.text) - before;
+        let habitToday = null;
+        // noCount：从文章转存过来的草稿，字数已经在正文里计过，不能重复算
+        if (delta > 0 && !body.noCount) habitToday = logWords(delta, '草稿');
+        return sendJson(res, 200, {
+          ok: true, id: d.id, updatedAt: d.updatedAt, words: countWords(d.text),
+          habit: habitToday ? { today: habitToday.today, streak: habitToday.streak } : null,
+        });
+      }
+    }
+    if (id && method === 'DELETE') return sendJson(res, 200, await deleteDraft(id));
   }
 
   /* ---- 文章列表 ---- */
@@ -537,8 +935,7 @@ async function handleApi(req, res, url) {
       if (!fs.existsSync(target)) return fail(res, 404, '源文章不存在');
       let raw = await fsp.readFile(target, 'utf8');
       const { meta, body: bd } = parseFrontmatter(raw);
-      meta.slug = next;
-      raw = composeMarkdown({ ...meta, date: new Date().toISOString().slice(0, 10) }, bd);
+      raw = composeMarkdown({ ...meta, date: localDate() }, bd);
       await fsp.writeFile(dest, raw, 'utf8');
       return sendJson(res, 200, { ok: true, slug: next });
     }
@@ -552,12 +949,33 @@ async function handleApi(req, res, url) {
     if (method === 'PUT') {
       if (!fs.existsSync(target)) return fail(res, 404, '文章不存在');
       const body = await readJson(req);
+      const prevRaw = await fsp.readFile(target, 'utf8');
+      const prev = parseFrontmatter(prevRaw);
+
       const meta = sanitizeMeta(body);
-      meta.date = normalizeDate(meta.date);
-      const md = composeMarkdown(meta, body.body);
-      await fsp.writeFile(target, md, 'utf8');
+      meta.date = formatStoredDate(body.date, prev.meta.date);
+      // 作者自己加的 frontmatter 字段先铺进来，sanitizeMeta 的结果覆盖标准字段
+      const merged = { ...prev.meta, ...stripUndef(meta) };
+      if (!('hot' in meta) || meta.hot !== true) delete merged.hot;
+      if (!meta.password) delete merged.password;
+      if (!meta.description) delete merged.description;
+      if (!meta.pdf) delete merged.pdf;
+
+      const md = composeMarkdown(merged, body.body, {
+        trailingNewline: /\n$/.test(prevRaw),
+        keepKeys: new Set(Object.keys(prev.meta)),
+      });
+
+      // 内容没变就不碰文件，避免 mtime 抖动和多余的 git diff
+      const changed = md !== prevRaw;
+      if (changed) await fsp.writeFile(target, md, 'utf8');
       const stat = await fsp.stat(target);
-      return sendJson(res, 200, { ok: true, mtime: Math.round(stat.mtimeMs) });
+      return sendJson(res, 200, {
+        ok: true,
+        changed,
+        mtime: Math.round(stat.mtimeMs),
+        words: countWords(cleanBody(body.body)),
+      });
     }
 
     if (method === 'DELETE') {
@@ -590,7 +1008,7 @@ async function handleApi(req, res, url) {
     const name = String(url.searchParams.get('name') || 'image.png');
     const buf = await readBody(req, 24 * 1024 * 1024);
     if (!buf.length) return fail(res, 400, '空文件');
-    const month = new Date().toISOString().slice(0, 7).replace('-', '');
+    const month = localDate().slice(0, 7).replace('-', '');
     const dir = path.join(UPLOAD_DIR, month);
     await fsp.mkdir(dir, { recursive: true });
     const ext = (path.extname(name) || '.png').toLowerCase();
@@ -616,7 +1034,7 @@ async function handleApi(req, res, url) {
 
   /* ---- 预览服务 ---- */
   if (seg === 'preview') {
-    if (method === 'GET') return sendJson(res, 200, { running: !!previewProc, port: 4321 });
+    if (method === 'GET') return sendJson(res, 200, { running: !!previewProc, port: 4321, log: previewLog.slice(-40) });
     const body = await readJson(req);
     if (body.action === 'stop') return sendJson(res, 200, stopPreview());
     return sendJson(res, 200, startPreview());
@@ -687,11 +1105,84 @@ function sanitizeMeta(body) {
   if (meta.access === 'protected') {
     meta.password = String(body.password || '').trim();
   }
-  if (!meta.description) delete meta.description;
-  if (!meta.pdf) delete meta.pdf;
-  if (!meta.password) delete meta.password;
-  if (!meta.hot) delete meta.hot;
   return meta;
+}
+
+/** 丢掉空值，方便把 sanitizeMeta 的结果合并进原有 frontmatter */
+function stripUndef(obj) {
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === undefined || v === null || v === '') continue;
+    out[k] = v;
+  }
+  return out;
+}
+
+/* ══════════════════════════ 每日写作提醒 ══════════════════════════ */
+
+const NOTIFY_CMD = `
+$ErrorActionPreference='SilentlyContinue'
+[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime] > $null
+[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType=WindowsRuntime] > $null
+$tpl = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
+$texts = $tpl.GetElementsByTagName('text')
+$texts.Item(0).AppendChild($tpl.CreateTextNode($env:STUDIO_TOAST_TITLE)) > $null
+$texts.Item(1).AppendChild($tpl.CreateTextNode($env:STUDIO_TOAST_BODY)) > $null
+$toast = [Windows.UI.Notifications.ToastNotification]::new($tpl)
+try {
+  $aumid = (Get-StartApps | Where-Object { $_.AppID -like 'Microsoft.Windows.PowerShell*' } | Select-Object -First 1).AppID
+  if (-not $aumid) { $aumid = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\\WindowsPowerShell\\v1.0\\powershell.exe' }
+  [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($aumid).Show($toast)
+} catch {
+  Add-Type -AssemblyName System.Windows.Forms
+  $n = New-Object System.Windows.Forms.NotifyIcon
+  $n.Icon = [System.Drawing.SystemIcons]::Information
+  $n.Visible = $true
+  $n.ShowBalloonTip(8000, $env:STUDIO_TOAST_TITLE, $env:STUDIO_TOAST_BODY, [System.Windows.Forms.ToolTipIcon]::Info)
+}`;
+
+function notify(title, body) {
+  try {
+    if (process.platform === 'win32') {
+      const ps = which('powershell') || which('pwsh');
+      if (!ps) return false;
+      const child = spawn(ps, ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-Command', NOTIFY_CMD], {
+        windowsHide: true,
+        env: { ...process.env, STUDIO_TOAST_TITLE: title, STUDIO_TOAST_BODY: body },
+        stdio: 'ignore',
+        detached: false,
+      });
+      child.on('error', () => { /* 通知失败不影响主流程 */ });
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function tickReminder() {
+  const habit = readHabit();
+  if (!habit.remindersOn || !habit.remindAt) return;
+  const now = new Date();
+  const key = localDate(now);
+  if (habit.lastNotifyDate === key) return;
+  const [h, m] = habit.remindAt.split(':').map(Number);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return;
+  const target = new Date(now);
+  target.setHours(h, m, 0, 0);
+  if (now < target) return;
+
+  const words = habit.days[key]?.words || 0;
+  const goal = Math.max(1, Number(habit.dailyGoal) || 1);
+  const title = words >= goal ? '今天的写作目标已达成了 ✓' : '还没动笔 —— 今天也没写吗？';
+  const body = words >= goal
+    ? `今天写了 ${words} 字，连续 ${calcStreak(habit)} 天。再补两句就是额外的。`
+    : `今天写了 ${words} / ${goal} 字，去 Studio 写 10 分钟吧。`;
+  if (notify(title, body)) {
+    habit.lastNotifyDate = key;
+    writeHabit(habit);
+  }
 }
 
 /* ══════════════════════════ 主服务 ══════════════════════════ */
@@ -745,6 +1236,9 @@ server.on('error', (e) => {
   console.error('服务启动失败:', e);
   process.exit(1);
 });
+
+const reminderTimer = setInterval(tickReminder, 30 * 1000);
+reminderTimer.unref?.();
 
 server.listen(PORT, HOST, () => {
   const line = '─'.repeat(52);

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PicBed · 简易图床</title>
+<link rel="stylesheet" href="app.css" />
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- 顶栏 -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-main">PICBED</span>
+      <span class="brand-sub">简易图床 · 上传 / 直链 / 图库</span>
+    </div>
+    <div class="topbar-right">
+      <div class="channel-tabs" id="channelTabs">
+        <button class="tab active" data-channel="github" title="提交到博客仓库，直链走自己域名">博客仓库</button>
+        <button class="tab" data-channel="imgbb" title="imgbb.com 邮箱注册免费拿 Key">ImgBB</button>
+        <button class="tab" data-channel="picgo" title="picgo.net 邮箱注册拿 Key">picgo.net</button>
+      </div>
+      <button class="icon-btn" id="btnTheme" title="切换明暗主题">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><circle cx="12" cy="12" r="4.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+      </button>
+      <button class="icon-btn" id="btnSettings" title="设置">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3.2M12 18.3v3.2M2.5 12h3.2M18.3 12h3.2M5.3 5.3l2.2 2.2M16.5 16.5l2.2 2.2M18.7 5.3l-2.2 2.2M7.5 16.5l-2.2 2.2"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- 左：上传区 -->
+    <section class="pane pane-upload">
+      <div class="drop" id="drop" tabindex="0">
+        <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="square"><path d="M12 16V5M7.5 9.5L12 5l4.5 4.5"/><path d="M4 15v4.5h16V15"/></svg>
+        <p class="drop-title">拖图片到这里，或 <b>点击选择</b></p>
+        <p class="drop-sub">支持多选 / Ctrl+V 粘贴截图 · 单张 ≤ 32MB · PNG JPG GIF WEBP AVIF SVG</p>
+        <input type="file" id="fileInput" multiple accept="image/*" hidden />
+      </div>
+
+      <div class="queue-head" id="queueHead" hidden>
+        <span id="queueSummary">上传队列</span>
+        <button class="btn btn-ghost btn-sm" id="btnClearQueue">清空完成项</button>
+      </div>
+      <ul class="queue" id="queue"></ul>
+    </section>
+
+    <!-- 右：图库 -->
+    <section class="pane pane-gallery">
+      <div class="gallery-head">
+        <h2>图库</h2>
+        <input id="search" type="text" placeholder="搜索文件名 / 直链" autocomplete="off" />
+        <div class="fmt-switch" id="fmtSwitch" title="复制格式">
+          <button class="fmt active" data-fmt="url">直链</button>
+          <button class="fmt" data-fmt="md">MD</button>
+          <button class="fmt" data-fmt="html">HTML</button>
+        </div>
+      </div>
+      <div class="gallery-body" id="galleryBody"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- 设置弹层 -->
+<div class="modal-mask" id="settingsModal" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <h3>设置</h3>
+      <button class="icon-btn" id="btnCloseSettings">✕</button>
+    </div>
+
+    <div class="settings-body">
+      <details class="set-group" open>
+        <summary>GitHub 仓库（博客自持图床）</summary>
+        <p class="hint">图片提交到 <code>owner/repo</code> 的 <code>public/uploads/</code>，Actions 部署后直链 <code>https://站点/uploads/…</code>。Token 需要 <b>repo</b> 权限，在 GitHub → Settings → Developer settings → Personal access tokens 生成。</p>
+        <label>Token <input type="password" id="cfgGhToken" placeholder="ghp_…" autocomplete="off" /></label>
+        <div class="row2">
+          <label>Owner <input type="text" id="cfgGhOwner" /></label>
+          <label>Repo <input type="text" id="cfgGhRepo" /></label>
+        </div>
+        <div class="row2">
+          <label>分支 <input type="text" id="cfgGhBranch" /></label>
+          <label>仓库内目录 <input type="text" id="cfgGhDir" /></label>
+        </div>
+        <label>站点域名 <input type="text" id="cfgGhSite" placeholder="https://guiyihan.top" /></label>
+      </details>
+
+      <details class="set-group">
+        <summary>ImgBB（imgbb.com）</summary>
+        <p class="hint">imgbb.com 邮箱注册 → api.imgbb.com 点 Get API key 即得。国内直连，无需翻墙。</p>
+        <label>API Key <input type="password" id="cfgImgbbKey" autocomplete="off" /></label>
+        <label>有效期（秒，留空永久） <input type="text" id="cfgImgbbExp" placeholder="如 15552000" /></label>
+      </details>
+
+      <details class="set-group">
+        <summary>picgo.net（Chevereto）</summary>
+        <p class="hint">www.picgo.net 邮箱注册 → 右上角设置 → API → 重新生成密钥。单图 ≤ 25MB。</p>
+        <label>API Key <input type="password" id="cfgPicgoKey" autocomplete="off" /></label>
+      </details>
+    </div>
+
+    <div class="modal-foot">
+      <span class="foot-note" id="cfgNote"></span>
+      <button class="btn btn-ghost" id="btnCancelSettings">取消</button>
+      <button class="btn btn-accent" id="btnSaveSettings">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>

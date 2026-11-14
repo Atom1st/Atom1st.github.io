@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>零类名 HTML · ccs.css 兜底验证</title>
+<link rel="stylesheet" href="ccs.css">
+</head>
+<body>
+
+<h1>A + B 计算器</h1>
+<p>这个页面<strong>一个 class 都没有加</strong>，只用裸标签 —— 和你截图里那份写法完全一致。用来验证 ccs.css 第 17 节「零类名兜底」是否生效。</p>
+
+<form id="calc">
+  <label for="a">A</label>
+  <input id="a" name="a" inputmode="decimal" autocomplete="off">
+
+  <label for="b">B</label>
+  <input id="b" name="b" inputmode="decimal" autocomplete="off">
+
+  <input type="submit" value="计算 A + B">
+  <input type="reset" value="重置">
+</form>
+
+<p>结果：<output id="sum">—</output></p>
+
+<hr>
+
+<h2>几种写法对照</h2>
+<p>下面三类控件也都是裸标签，样式同样由 ccs.css 兜底：</p>
+
+<form>
+  <label for="plain">文本框（无 type 属性）</label>
+  <input id="plain" name="plain" placeholder="这种最常见，旧版 CCS 就是漏在这">
+
+  <label for="typed">文本框（type=text）</label>
+  <input type="text" id="typed" name="typed" placeholder="一直都有样式">
+
+  <label for="num">数字框（type=number）</label>
+  <input type="number" id="num" name="num" value="3">
+
+  <label for="pick">下拉框</label>
+  <select id="pick" name="pick">
+    <option>选项一</option>
+    <option>选项二</option>
+  </select>
+
+  <label for="note">多行文本</label>
+  <textarea id="note" name="note" rows="3" placeholder="写点什么"></textarea>
+
+  <label><input type="checkbox" name="agree" checked> 记住这次结果</label>
+
+  <button type="button" onclick="alert('裸 button 也有样式了')">裸 button</button>
+</form>
+
+<script>
+(function () {
+  var form = document.getElementById('calc');
+  var a = document.getElementById('a');
+  var b = document.getElementById('b');
+  var out = document.getElementById('sum');
+
+  // 按小数位放大为整数相加，避免 0.1 + 0.2 = 0.30000000000000004
+  function decimals(v) {
+    var s = String(v).trim();
+    var i = s.indexOf('.');
+    return i === -1 ? 0 : s.length - i - 1;
+  }
+  function add(a1, b1) {
+    var d = Math.min(Math.max(decimals(a1), decimals(b1)), 10);
+    var k = Math.pow(10, d);
+    return (Math.round(Number(a1) * k) + Math.round(Number(b1) * k)) / k;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var x = a.value.trim();
+    var y = b.value.trim();
+    if (x === '' || y === '' || isNaN(Number(x)) || isNaN(Number(y))) {
+      out.textContent = '请先填入两个数字';
+      return;
+    }
+    out.textContent = add(x, y);
+  });
+
+  form.addEventListener('reset', function () {
+    setTimeout(function () { out.textContent = '—'; }, 0);
+  });
+})();
+</script>
+
+</body>
+</html>
