@@ -4,6 +4,10 @@ import articlesData from '../data/articles.json';
 import { catClass } from '../lib/categories';
 
 const all = (articlesData as any[]).filter((p) => p.type !== 'page');
+const allArticles = all.filter((p: any) => p.type === 'article');
+const articleCount = allArticles.length;
+const categoryCount = new Set(allArticles.map((p: any) => p.category)).size;
+const firstDate = allArticles.map((p: any) => p.date).sort()[0] || '2026-05-16';
 const latest = all
   .filter((p) => p.type === 'article')
   .sort((a, b) => b.date.localeCompare(a.date))
@@ -12,13 +16,12 @@ const hot = all
   .filter((p) => p.hot)
   .sort((a, b) => b.date.localeCompare(a.date));
 ---
-<BaseLayout showHero>
+<BaseLayout showHero description="一名初中 Oier 的博客：记录、文学、理论、学习与生活，用文字传递所思所想。">
   <main class="content">
     <h1 class="page-title">路漫漫其修远兮</h1>
     <p class="page-sub">吾将上下而求索 —— 一个初中Oier的博客</p>
 
     <picture class="hero-banner">
-      <source media="(prefers-color-scheme: dark)" srcset="/ghptnight.webp" type="image/webp" />
       <img
         src="/ghptlight.webp"
         alt="观海平台"
@@ -33,12 +36,18 @@ const hot = all
       />
     </picture>
 
+    <div class="stats-bar">
+      <div class="stat"><strong>{articleCount}</strong><span>篇文章</span></div>
+      <div class="stat"><strong>{categoryCount}</strong><span>个分类</span></div>
+      <div class="stat"><strong id="runningDays" data-since={firstDate}>—</strong><span>天记录</span></div>
+    </div>
+
     <h2>本站简介</h2>
-    <p>站长 Guiyihan 是一名来自广东汕头的初中生，现就读于专注数学与物理的Q班？</p>
+    <p>站长 Guiyihan 是一名来自广东汕头的初中生，现就读于专注数学与物理的Q班。</p>
     <p>为了分享我自己的生活与思考，我搭建了这个博客。这个博客从前端到部署全部AI、不用手搓。</p>
     <p>如今，世界之变，时代之变，以前所未有的速度进行着。我希望我可以保持创新，用这个博客传递我的所思所想。</p>
     <h2>最新文章</h2>
-    <div class="card-list">
+    <div class="home-grid">
       {latest.map((e) => (
         <a class={`card ${catClass(e.category)}`} href={`/articles/${e.id}`}>
           <h3>
@@ -84,6 +93,13 @@ const hot = all
 </BaseLayout>
 
 <script is:inline>
+  (function () {
+    const daysEl = document.getElementById('runningDays');
+    if (!daysEl) return;
+    const start = new Date(daysEl.getAttribute('data-since') + 'T00:00:00');
+    daysEl.textContent = String(Math.max(1, Math.floor((Date.now() - start.getTime()) / 86400000)));
+  })();
+
   // 主页横幅跟随主题切换：手动点按钮或系统偏好变化时，同步替换 <img> 的图源
   (function () {
     const img = document.querySelector('.hero-banner img');

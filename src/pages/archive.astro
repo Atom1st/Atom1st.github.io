@@ -1,0 +1,35 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import articlesData from '../data/articles.json';
+import { catClass } from '../lib/categories';
+
+const articles = (articlesData as any[])
+  .filter((p: any) => p.type === 'article')
+  .sort((a: any, b: any) => b.date.localeCompare(a.date));
+
+const groups = new Map<string, any[]>();
+articles.forEach((a: any) => {
+  const key = a.date.slice(0, 7);
+  if (!groups.has(key)) groups.set(key, []);
+  groups.get(key)!.push(a);
+});
+---
+<BaseLayout title="归档">
+  <main class="content">
+    <h1 class="page-title">归档</h1>
+    <p class="page-sub">按时间梳理全部文章，共 {articles.length} 篇</p>
+    {Array.from(groups.entries()).map(([month, list]) => (
+      <section class="archive-group">
+        <h2>{month}</h2>
+        <div class="card-list">
+          {list.map((p: any) => (
+            <a class={`card ${catClass(p.category)}`} href={`/articles/${p.id}`}>
+              <h3>{p.title}</h3>
+              <div class="meta"><i class="far fa-calendar"></i> {p.date} · <span class="cat-chip">{p.category}</span></div>
+            </a>
+          ))}
+        </div>
+      </section>
+    ))}
+  </main>
+</BaseLayout>

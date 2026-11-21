@@ -3,6 +3,8 @@ import { getCollection, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import ArticleMeta from '../../components/ArticleMeta.astro';
 import Giscus from '../../components/Giscus.astro';
+import Toc from '../../components/Toc.astro';
+import { catClass } from '../../lib/categories';
 import { readingInfo } from '../../lib/reading';
 import articlesData from '../../data/articles.json';
 
@@ -37,6 +39,7 @@ const isEncrypted = Astro.props.isEncrypted;
 
 let articleMeta: any;
 let Content: any;
+let headings: any[] = [];
 let words = 0;
 let minutes = 0;
 
@@ -58,6 +61,7 @@ if (isEncrypted) {
   };
   const rendered = await render(entry);
   Content = rendered.Content;
+  headings = rendered.headings;
   const info = readingInfo(entry.body);
   words = info.words;
   minutes = info.minutes;
@@ -67,8 +71,23 @@ const isProtected = articleMeta.access === 'protected';
 const passwordHash = articleMeta.passwordHash || '';
 const storageKey = `article-unlocked-${articleMeta.id}`;
 const encFileUrl = `/encrypted/${articleMeta.id}.json`;
+const showToc = !isProtected && headings.filter((h: any) => h.depth === 2 || h.depth === 3).length > 1;
+
+const ordered = (articlesData as any[])
+  .filter((p: any) => p.type === 'article')
+  .sort((a: any, b: any) => b.date.localeCompare(a.date));
+const currentIndex = ordered.findIndex((p: any) => p.id === articleMeta.id);
+const prevPost = currentIndex > 0 ? ordered[currentIndex - 1] : null;
+const nextPost = currentIndex >= 0 && currentIndex < ordered.length - 1 ? ordered[currentIndex + 1] : null;
+const related = ordered
+  .filter((p: any) => p.id !== articleMeta.id && p.category === articleMeta.category)
+  .slice(0, 2);
 ---
-<BaseLayout title={articleMeta.title}>
+<BaseLayout
+  title={articleMeta.title}
+  description={articleMeta.description || `《${articleMeta.title}》—— Guiyihan的博客`}
+  type="article"
+>
   <main class="content">
     <h1 class="page-title">{articleMeta.title}</h1>
     <ArticleMeta
@@ -111,13 +130,43 @@ const encFileUrl = `/encrypted/${articleMeta.id}.json`;
         </div>
       </div>
     ) : (
-      <article class="article-body">
-        <Content />
-      </article>
+      <div class={showToc ? 'article-layout' : ''}>
+        <article class="article-body">
+          <Content />
+        </article>
+        {showToc && <Toc headings={headings} />}
+      </div>
     )}
 
     {isProtected && (
       <div id="decryptedContent" class="article-body" style="display:none"></div>
+    )}
+
+    <nav class="post-nav" aria-label="文章导航">
+      {prevPost ? (
+        <a class="post-nav-item" href={`/articles/${prevPost.id}`}>
+          <span>← 上一篇</span><strong>{prevPost.title}</strong>
+        </a>
+      ) : <span class="post-nav-item placeholder"></span>}
+      {nextPost ? (
+        <a class="post-nav-item next" href={`/articles/${nextPost.id}`}>
+          <span>下一篇 →</span><strong>{nextPost.title}</strong>
+        </a>
+      ) : <span class="post-nav-item placeholder"></span>}
+    </nav>
+
+    {related.length > 0 && (
+      <section class="related-posts">
+        <h2>相关文章</h2>
+        <div class="card-list">
+          {related.map((p: any) => (
+            <a class={`card ${catClass(p.category)}`} href={`/articles/${p.id}`}>
+              <h3>{p.title}</h3>
+              <div class="meta"><i class="far fa-calendar"></i> {p.date} · <span class="cat-chip">{p.category}</span></div>
+            </a>
+          ))}
+        </div>
+      </section>
     )}
 
     <hr />

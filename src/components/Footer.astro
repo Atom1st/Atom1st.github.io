@@ -1,0 +1,15 @@
+---
+import { site } from '../site';
+const year = new Date().getFullYear();
+---
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>© {year} {site.name} · {site.bio}</span>
+    <span>
+      <a href="/rss.xml"><i class="fas fa-rss"></i> RSS</a> ·
+      <a href="/archive"><i class="fas fa-archive"></i> 归档</a> ·
+      <a href="https://github.com/Atom1st" target="_blank" rel="noopener"><i class="fab fa-github"></i> GitHub</a> ·
+      <a href="#"><i class="fas fa-arrow-up"></i> 顶部</a>
+    </span>
+  </div>
+</footer>

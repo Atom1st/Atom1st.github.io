@@ -1,0 +1,67 @@
+<script is:inline>
+  (function () {
+    const bar = document.getElementById('readingProgress');
+    if (bar) {
+      function updateProgress() {
+        const doc = document.documentElement;
+        const max = doc.scrollHeight - window.innerHeight;
+        bar.style.width = (max > 0 ? Math.min(100, (window.scrollY / max) * 100) : 0) + '%';
+      }
+      window.addEventListener('scroll', updateProgress, { passive: true });
+      window.addEventListener('resize', updateProgress);
+      updateProgress();
+    }
+
+    function bindCopy(root) {
+      root.querySelectorAll('pre:not([data-copy-ready])').forEach(function (pre) {
+        pre.setAttribute('data-copy-ready', '1');
+        const code = pre.innerText;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'copy-code';
+        btn.textContent = '复制';
+        btn.addEventListener('click', async function () {
+          try {
+            await navigator.clipboard.writeText(code);
+            btn.textContent = '已复制';
+          } catch (e) {
+            btn.textContent = '复制失败';
+          }
+          setTimeout(function () {
+            btn.textContent = '复制';
+          }, 1600);
+        });
+        pre.appendChild(btn);
+      });
+    }
+
+    bindCopy(document);
+    const decrypted = document.getElementById('decryptedContent');
+    if (decrypted) {
+      new MutationObserver(function () {
+        bindCopy(decrypted);
+      }).observe(decrypted, { childList: true });
+    }
+
+    const box = document.createElement('div');
+    box.className = 'lightbox';
+    const big = document.createElement('img');
+    big.alt = '';
+    box.appendChild(big);
+    document.body.appendChild(box);
+
+    document.addEventListener('click', function (e) {
+      const img = e.target && e.target.closest && e.target.closest('.article-body img');
+      if (img) {
+        big.src = img.src;
+        box.classList.add('show');
+      }
+    });
+    box.addEventListener('click', function () {
+      box.classList.remove('show');
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') box.classList.remove('show');
+    });
+  })();
+</script>

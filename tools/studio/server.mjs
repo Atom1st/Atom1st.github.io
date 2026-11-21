@@ -31,7 +31,7 @@ const CONFIG_FILE = path.join(__dirname, '.studio.json');
 const HABIT_FILE = path.join(__dirname, '.studio-habit.json');
 const DRAFT_DIR = path.join(__dirname, 'drafts');
 const PORT = Number(process.env.STUDIO_PORT || 7788);
-const HOST = '127.0.0.1';
+const HOST = '0.0.0.0';
 
 const CATEGORIES = ['记录', '文学', '理论', '学习', '生活', '评论'];
 const TYPES = ['article', 'resource', 'page'];
@@ -1245,7 +1245,8 @@ server.listen(PORT, HOST, () => {
   console.log(line);
   console.log('  Guiyihan Studio · 本地写作工作台');
   console.log(line);
-  console.log(`  地址      http://${HOST}:${PORT}`);
+  console.log(`  地址      http://127.0.0.1:${PORT}`);
+  console.log(`  手机访问  http://<你的电脑IP>:${PORT}`);
   console.log(`  项目      ${ROOT}`);
   console.log(`  运行时    ${BUN ? 'bun ✓' : 'bun ✗（改用 node 直跑）'}   git ${GIT ? '✓' : '✗'}`);
   console.log(`  依赖      ${HAS_MODULES ? 'node_modules ✓' : 'node_modules ✗ 请先 bun install'}`);

@@ -3,15 +3,29 @@ import '../styles/global.css';
 import 'katex/dist/katex.min.css';
 import Topbar from '../components/Topbar.astro';
 import Sidebar from '../components/Sidebar.astro';
+import Footer from '../components/Footer.astro';
+import Search from '../components/Search.astro';
+import ArticleEnhance from '../components/ArticleEnhance.astro';
 import { site } from '../site';
 
 interface Props {
   title?: string;
   /** 该页面是否包含首屏横幅（主页为 true）：用于提前预加载对应主题的横幅图 */
   showHero?: boolean;
+  description?: string;
+  image?: string;
+  type?: 'website' | 'article';
 }
-const { title, showHero = false } = Astro.props;
+const {
+  title,
+  showHero = false,
+  description = 'Guiyihan的博客 —— 记录、文学、理论、学习与生活。',
+  image = '/ghptlight.webp',
+  type = 'website',
+} = Astro.props;
 const pageTitle = title ? `${title} - ${site.title}` : site.title;
+const canonical = Astro.url.href;
+const ogImage = new URL(image, Astro.site).href;
 ---
 
 <!DOCTYPE html>
@@ -20,15 +34,32 @@ const pageTitle = title ? `${title} - ${site.title}` : site.title;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:site_name" content={site.title} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css" />
-  <link rel="icon" href="/my.jpg" type="image/jpg" />
+    <link rel="icon" href="/my.jpg" type="image/jpg" />
+    <script is:inline>
+      (function () {
+        const saved = localStorage.getItem('theme') || 'system';
+        const isDark = saved === 'dark' || (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      })();
+    </script>
     {showHero && (
       <script is:inline>
         // 在 CSS/JS 之前预加载横幅图：只加载当前主题那张，避免浪费带宽
         (function () {
-          const saved = localStorage.getItem('theme');
-          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const theme = saved || (prefersDark ? 'dark' : 'light');
+          const theme = document.documentElement.getAttribute('data-theme') || 'light';
           const base = theme === 'dark' ? '/ghptnight' : '/ghptlight';
           const supportsWebp = (function () {
             try {
@@ -53,7 +84,10 @@ const pageTitle = title ? `${title} - ${site.title}` : site.title;
       <Sidebar />
       <div class="overlay" id="overlay"></div>
       <slot />
+      <Footer />
     </div>
+    <Search />
+    <ArticleEnhance />
     <script is:inline>
       const t = document.getElementById('menuToggle');
       const s = document.getElementById('sidebar');
