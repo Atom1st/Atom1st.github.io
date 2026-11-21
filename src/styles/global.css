@@ -891,6 +891,69 @@ pre { position: relative; }
 .related-posts h2 { margin-top: 8px; }
 .archive-group h2 { font-family: var(--font-mono, monospace); }
 
+/* 标签云 */
+.tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0 28px;
+}
+.tag-cloud-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    background: var(--paper);
+    color: var(--text);
+    padding: 6px 12px;
+    font-size: 13px;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+}
+.tag-cloud-item:hover { background: var(--accent); color: #fff; text-decoration: none; }
+.tag-cloud-item.lg { font-size: 15px; padding: 8px 14px; }
+.tag-cloud-item.xl { font-size: 17px; padding: 10px 18px; border-left-width: 4px; font-weight: 700; }
+.tag-cloud-item .cnt {
+    display: inline-block;
+    min-width: 18px;
+    padding: 0 5px;
+    text-align: center;
+    font-size: 11px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--muted);
+}
+.tag-cloud-item.active,
+.tag-cloud-item.active:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.tag-cloud-item.active .cnt { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); color: #fff; }
+
+/* 小标签（文章卡片 / 文章页） */
+.tag-row { display: inline-flex; flex-wrap: wrap; align-items: center; }
+.mini-tag {
+    display: inline-block;
+    font-size: 11px;
+    color: var(--accent-dark);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    margin-left: 6px;
+    text-decoration: none;
+}
+a.mini-tag:hover { background: var(--accent); color: #fff; text-decoration: none; }
+.article-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin: 20px 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+}
+.article-tags > i { margin-right: 6px; color: var(--accent); }
+
 /* 站点页脚 */
 .site-footer {
     margin-left: max(var(--sidebar-w), calc((100vw - 960px + var(--sidebar-w)) / 2));

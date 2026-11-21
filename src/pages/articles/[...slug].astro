@@ -58,6 +58,7 @@ if (isEncrypted) {
     access: entry.data.access,
     passwordHash: entry.data.password || '',
     pdf: entry.data.pdf,
+    tags: (entry.data as any).tags || [],
   };
   const rendered = await render(entry);
   Content = rendered.Content;
@@ -140,6 +141,15 @@ const related = ordered
 
     {isProtected && (
       <div id="decryptedContent" class="article-body" style="display:none"></div>
+    )}
+
+    {Array.isArray((articleMeta as any).tags) && (articleMeta as any).tags.length > 0 && (
+      <div class="article-tags">
+        <i class="fas fa-tags"></i>
+        {(articleMeta as any).tags.map((t: string) => (
+          <a class="mini-tag" href={`/tags/#${encodeURIComponent(t)}`}>#{t}</a>
+        ))}
+      </div>
     )}
 
     <nav class="post-nav" aria-label="文章导航">

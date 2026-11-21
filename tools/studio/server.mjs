@@ -167,7 +167,7 @@ function yamlScalar(s) {
  * 按原顺序原样保留在最后 —— 早期的实现只写 FIELD_ORDER 里的字段，
  * 保存一次就会把别的字段整段吃掉。
  */
-const FIELD_ORDER = ['title', 'date', 'category', 'description', 'type', 'origin', 'access', 'password', 'hot', 'pdf'];
+const FIELD_ORDER = ['title', 'date', 'category', 'description', 'tags', 'type', 'origin', 'access', 'password', 'hot', 'pdf'];
 
 function formatYamlValue(key, v) {
   if (key === 'hot') return v === true ? 'true' : 'false';
@@ -186,6 +186,7 @@ function buildFrontmatter(meta, keepKeys = null) {
     if (done.has(key)) return;
     const v = meta[key];
     if (v === undefined || v === null || v === '') return;
+    if (Array.isArray(v) && v.length === 0) return;
     if (key === 'hot' && v !== true) return;
     // 新建文章时默认值不写进文件，保持作者的极简风格；
     // 但已有文件里写了的字段要原样保留，否则保存一次就少一行。
@@ -261,6 +262,7 @@ function toArticle(slug, raw, stat) {
     date: normalizeDate(meta.date || ''),
     category: String(meta.category || '记录'),
     description: String(meta.description || ''),
+    tags: Array.isArray(meta.tags) ? meta.tags.map(String) : [],
     type: String(meta.type || 'article'),
     origin: String(meta.origin || 'original'),
     access: String(meta.access || 'public'),
@@ -1105,6 +1107,9 @@ function sanitizeMeta(body) {
   if (meta.access === 'protected') {
     meta.password = String(body.password || '').trim();
   }
+  meta.tags = Array.isArray(body.tags)
+    ? [...new Set(body.tags.map(t => String(t).trim().replace(/^#/, '').slice(0, 16)).filter(Boolean))].slice(0, 20)
+    : [];
   return meta;
 }
 

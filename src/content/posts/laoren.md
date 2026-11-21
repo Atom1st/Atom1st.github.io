@@ -2,7 +2,7 @@
 title: 老任
 date: 2026-9-11
 category: 文学
-description: 纪念老任老师
+description: 怀人日记
 type: article
 ---
 
@@ -31,8 +31,6 @@ type: article
 从那时起，我们就知道，老任不一般。
 
 这个道理，我今天在访问Wiki，面对众说纷纭的观点，或是“震碎三观”的“史实”，还是会经常想起。
-
-
 
 ### 老任很厉害
 

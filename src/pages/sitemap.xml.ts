@@ -6,6 +6,7 @@ const staticPaths = [
   '/',
   '/articles',
   '/archive',
+  '/tags',
   '/resources',
   '/friends',
   '/about',

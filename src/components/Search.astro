@@ -9,6 +9,7 @@ const index = (articlesData as any[])
     category: p.category,
     date: p.date,
     description: p.description || '',
+    tags: Array.isArray(p.tags) ? p.tags : [],
   }));
 
 const data = JSON.stringify(index).replace(/</g, '\\u003c');
@@ -41,7 +42,7 @@ const data = JSON.stringify(index).replace(/</g, '\\u003c');
       const q = input.value.trim().toLowerCase();
       const list = q
         ? searchIndex.filter(function (p) {
-            return (p.title + ' ' + p.category + ' ' + p.description).toLowerCase().indexOf(q) !== -1;
+            return (p.title + ' ' + p.category + ' ' + p.description + ' ' + (p.tags || []).join(' ')).toLowerCase().indexOf(q) !== -1;
           })
         : searchIndex.slice(0, 8);
       selected = 0;

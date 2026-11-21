@@ -23,6 +23,7 @@ const posts = defineCollection({
     origin: z.enum(['original', 'repost']).default('original'),
     access: z.enum(['public', 'protected']).default('public'),
     password: z.string().nullish(),
+    tags: z.array(z.string()).default([]),
   }),
 });
 

@@ -27,6 +27,7 @@ const state = {
   lastInputAt: 0,
   habitDirty: { cats: {}, focused: 0 },
   tags: {},               // { slug: [tag] } 本地选题标签
+  postTags: [],           // 文章标签（写入 frontmatter，会发布）
   lastWords: 0,
   // 草稿
   drafts: [],
@@ -243,6 +244,18 @@ async function loadPosts() {
   renderList();
 }
 
+/* 后端版本自检：旧版 server.mjs 的 /api/posts 不含 tags 字段，
+   会导致标签静默丢失。检测到就给出明确提示，避免误以为「保存失败」。*/
+function checkBackendVersion() {
+  const bar = document.getElementById('verWarn');
+  if (!bar || !state.posts || !state.posts.length) return;
+  const hasTagsKey = ('tags' in state.posts[0]);
+  if (hasTagsKey) return;
+  document.getElementById('verWarnText').textContent =
+    '后端服务是旧版本：标签等新功能无法保存。请关闭 Studio 窗口后重新双击 start.cmd 启动，即可恢复。';
+  bar.hidden = false;
+}
+
 /* ─────────────────────── 编辑器 ↔ 表单 ─────────────────────── */
 
 function setSeg(container, value) {
@@ -326,6 +339,8 @@ function fillForm(a) {
   setSeg($('#fAccess'), currentAccessVal);
   $('#pwdField').hidden = currentAccessVal !== 'protected';
 
+  state.postTags = Array.isArray(a.tags) ? [...a.tags] : [];
+  renderPostTags();
   renderTags(a.slug);
   updateUrlPreview();
   updateTitleMeta();
@@ -345,6 +360,7 @@ function collect() {
     password: $('#fPassword').value,
     hot: $('#fHot').checked,
     pdf: $('#fPdf').value.trim(),
+    tags: [...(state.postTags || [])],
     body: state.vditor ? toEol(mdFromEditor(state.vditor.getValue()), state.eol) : '',
   };
 }
@@ -610,6 +626,23 @@ async function loadHabit() {
     state.lastWords = editorWords();
     renderHabit();
   } catch { /* 忽略 */ }
+}
+
+/* ─────────────────────── 文章标签（发布） ─────────────────────── */
+
+function renderPostTags() {
+  const list = state.postTags || [];
+  $('#fPostTags').innerHTML = list.length
+    ? list.map(t => `<button class="chip on tag" data-post-tag="${esc(t)}" title="点击移除">${esc(t)} ✕</button>`).join('')
+    : '<span class="hint">还没有标签</span>';
+}
+function addPostTag() {
+  const t = $('#fNewPostTag').value.trim().replace(/^#/, '').slice(0, 16);
+  if (!t) return;
+  if (!state.postTags.includes(t)) state.postTags.push(t);
+  $('#fNewPostTag').value = '';
+  renderPostTags();
+  markDirty();
 }
 
 /* ─────────────────────── 选题标签（本地） ─────────────────────── */
@@ -987,6 +1020,10 @@ async function refreshEnv() {
 /* ─────────────────────── 绑定事件 ─────────────────────── */
 
 function bindEvents() {
+  /* 后端版本警告条 */
+  $('#btnWarnReload')?.addEventListener('click', () => location.reload());
+  $('#btnWarnDismiss')?.addEventListener('click', () => { $('#verWarn').hidden = true; });
+
   /* 左侧导航 */
   $$('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => switchView(btn.dataset.view));
@@ -1050,7 +1087,7 @@ function bindEvents() {
   });
 
   /* 表单改动 */
-  const dirtyFields = ['#title', '#fDate', '#fDescription', '#fPdf', '#fPassword', '#fSlug'];
+  const dirtyFields = ['#title', '#fDate', '#fDescription', '#fPdf', '#fPassword', '#fSlug', '#fNewPostTag'];
   dirtyFields.forEach(sel => {
     $(sel).addEventListener('input', () => { markDirty(); updateUrlPreview(); updateTitleMeta(); });
   });
@@ -1065,6 +1102,17 @@ function bindEvents() {
     if (!state.current) return;
     try { await api('/api/reveal', { method: 'POST', body: { slug: state.current.slug } }); }
     catch (e) { toast(e.message, true); }
+  });
+
+  /* 文章标签（发布） */
+  $('#btnAddPostTag').addEventListener('click', addPostTag);
+  $('#fNewPostTag').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addPostTag(); } });
+  $('#fPostTags').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-post-tag]');
+    if (!btn) return;
+    state.postTags = state.postTags.filter(t => t !== btn.dataset.postTag);
+    renderPostTags();
+    markDirty();
   });
 
   /* 标签 */
@@ -1221,6 +1269,7 @@ function bindEvents() {
   setSeg($('#nCategory'), '记录');
 
   await loadPosts();
+  checkBackendVersion();
   await loadHabit();
   loadDrafts().catch(() => {});
 

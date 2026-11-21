@@ -1,0 +1,74 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import articlesData from '../../data/articles.json';
+import { catClass } from '../../lib/categories';
+
+const articles = (articlesData as any[]).filter((p: any) => p.type === 'article');
+const counter = new Map<string, number>();
+articles.forEach((a: any) => {
+  (Array.isArray(a.tags) ? a.tags : []).forEach((t: string) => {
+    counter.set(t, (counter.get(t) || 0) + 1);
+  });
+});
+const tags = Array.from(counter.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+const tagged = articles.filter((a: any) => Array.isArray(a.tags) && a.tags.length > 0);
+---
+<BaseLayout title="标签" description="按主题浏览文章标签">
+  <main class="content">
+    <h1 class="page-title">标签</h1>
+    <p class="page-sub">按主题串联文章，共 {tags.length} 个标签</p>
+
+    {tags.length === 0 ? (
+      <div class="notice">
+        <i class="fas fa-tags"></i> 还没有文章打标签。打开 Studio 给文章加上标签后，标签云会自动出现在这里。
+      </div>
+    ) : (
+      <>
+        <div class="tag-cloud" id="tagCloud">
+          {tags.map(([tag, count]) => (
+            <a
+              href={`#${encodeURIComponent(tag)}`}
+              class={`tag-cloud-item ${count >= 4 ? 'xl' : count >= 2 ? 'lg' : ''}`}
+              data-tag={tag}
+            >
+              <i class="fas fa-tag"></i> {tag} <span class="cnt">{count}</span>
+            </a>
+          ))}
+        </div>
+        <div class="card-list" id="taggedList">
+          {tagged.map((a: any) => (
+            <a class={`card ${catClass(a.category)} tagged-card`} data-tags={a.tags.join(',')} href={`/articles/${a.id}`}>
+              <h3>{a.title}</h3>
+              <div class="meta">
+                <span class="cat-chip">{a.category}</span> &nbsp;· <i class="far fa-calendar"></i> {a.date}
+                <span class="tag-row">{a.tags.map((t: string) => <span class="mini-tag">#{t}</span>)}</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      </>
+    )}
+  </main>
+</BaseLayout>
+
+<script is:inline>
+  (function () {
+    const links = document.querySelectorAll('#tagCloud a[data-tag]');
+    const cards = document.querySelectorAll('#taggedList .tagged-card');
+    function apply(tag) {
+      links.forEach(function (a) {
+        a.classList.toggle('active', a.getAttribute('data-tag') === tag);
+      });
+      cards.forEach(function (c) {
+        const list = (c.getAttribute('data-tags') || '').split(',');
+        c.style.display = !tag || list.indexOf(tag) !== -1 ? '' : 'none';
+      });
+    }
+    links.forEach(function (a) {
+      a.addEventListener('click', function () {
+        apply(a.getAttribute('data-tag'));
+      });
+    });
+    if (location.hash) apply(decodeURIComponent(location.hash.slice(1)));
+  })();
+</script>

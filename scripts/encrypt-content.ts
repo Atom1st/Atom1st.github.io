@@ -30,6 +30,7 @@ interface ArticleMeta {
   passwordHash: string;
   hot: boolean;
   pdf?: string;
+  tags?: string[];
 }
 
 function parseFrontmatter(content: string): { data: Record<string, any>; body: string } {
@@ -101,6 +102,9 @@ function main() {
       hot: data.hot === true,
     };
     if (data.pdf) meta.pdf = String(data.pdf);
+    if (Array.isArray(data.tags) && data.tags.length) {
+      meta.tags = data.tags.map(String);
+    }
 
     if (data.access === 'protected') protectedIds.push(slug);
 

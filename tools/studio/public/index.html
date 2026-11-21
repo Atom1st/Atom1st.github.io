@@ -9,6 +9,13 @@
 </head>
 <body>
 
+<div class="ver-warn" id="verWarn" hidden>
+  <i>⚠</i>
+  <span id="verWarnText">检测到后端服务版本过旧，标签等功能可能保存失败。</span>
+  <button id="btnWarnReload" type="button">重新加载</button>
+  <button id="btnWarnDismiss" type="button" title="忽略">✕</button>
+</div>
+
 <div class="shell" id="shell">
 
   <!-- ═════════ 左：导航 + 文章列表 / 今日 ═════════ -->
@@ -260,6 +267,16 @@
         <label class="check"><input type="checkbox" id="fHot" /> 标记为热门资源</label>
 
         <div class="divider"></div>
+
+        <div class="field">
+          <label>文章标签（发布）</label>
+          <div class="chips tags" id="fPostTags"></div>
+          <div class="field-row">
+            <input id="fNewPostTag" placeholder="输入标签后回车，如 CSP" />
+            <button class="btn btn-sm" id="btnAddPostTag">加</button>
+          </div>
+          <p class="hint">写入 frontmatter 的 tags 字段，用于博客标签云；留空则不写进文章。</p>
+        </div>
 
         <div class="field">
           <label>选题标签（本地，不发布）</label>

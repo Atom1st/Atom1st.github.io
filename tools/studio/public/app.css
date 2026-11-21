@@ -994,3 +994,31 @@ input[type="checkbox"] { border-radius: 0 !important; }
 
 /* 窄屏：侧栏设置不再挤占，专注模式优先级最高 */
 body.focus-mode .rail { display: none !important; }
+
+/* 后端版本过旧警告条 */
+.ver-warn {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--danger, #c0392b);
+  color: #fff;
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.ver-warn[hidden] { display: none; }
+.ver-warn i { font-style: normal; font-size: 16px; }
+.ver-warn span { flex: 1; }
+.ver-warn button {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.5);
+  padding: 3px 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.ver-warn button:hover { background: rgba(255,255,255,0.32); }
+.ver-warn #btnWarnDismiss { border-color: transparent; background: transparent; font-size: 14px; }

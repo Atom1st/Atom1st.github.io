@@ -8,6 +8,7 @@ export const site = {
     { href: '/resources', label: '资源', icon: 'fa-folder-open' },
     { href: '/articles', label: '文章', icon: 'fa-book-open' },
     { href: '/archive', label: '归档', icon: 'fa-archive' },
+    { href: '/tags', label: '标签', icon: 'fa-tags' },
     { href: '/friends', label: '友链', icon: 'fa-link' },
     { href: '/about', label: '关于', icon: 'fa-user' },
     { href: '/guestbook', label: '留言板', icon: 'fa-comments' },
