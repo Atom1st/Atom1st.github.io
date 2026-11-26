@@ -1,0 +1,210 @@
+/* =========================================================
+   Guiyihan的博客 — 手机端 / 平板端适配层
+   ---------------------------------------------------------
+   加载顺序：global.css → mono.css → responsive.css（本文件最后）
+   选择器统一带 html[data-palette] 前缀，特异性与 mono.css 持平，
+   靠「后加载」稳定覆盖 color / mono 两套配色的既有规则。
+   断点体系：
+     ≤1100px        平板横屏 / 小笔记本：侧栏收窄、留白收紧、隐藏 TOC
+     701 ~ 880px    平板竖屏：侧栏转抽屉（沿用原有逻辑并增强）
+     ≤700px         手机：全单列、触摸目标放大、表格/公式横向滚动
+     ≤400px         小屏手机：顶栏压缩、弹层与卡片内边距收敛
+   ========================================================= */
+
+/* ---------- 基础：禁横向溢出 / 禁字体自动放大 / 去掉点击高亮 ---------- */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+html, body { max-width: 100%; }
+body { -webkit-tap-highlight-color: transparent; }
+
+/* 长内容一律允许折行，不撑破布局 */
+html[data-palette] .content,
+html[data-palette] .article-body,
+html[data-palette] #decryptedContent {
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+html[data-palette] .content pre,
+html[data-palette] .article-body pre,
+html[data-palette] #decryptedContent pre,
+html[data-palette] .katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+html[data-palette] .katex-display { padding: 2px 0; }
+html[data-palette] .content img,
+html[data-palette] .article-body img,
+html[data-palette] #decryptedContent img { max-width: 100%; height: auto; }
+html[data-palette] iframe { max-width: 100%; }
+
+/* =========================================================
+   平板横屏 / 小笔记本：881 ~ 1100px
+   侧栏常驻，但收窄以换取正文宽度；TOC 让位给正文
+   ========================================================= */
+@media (min-width: 881px) and (max-width: 1100px) {
+  html[data-palette] { --sidebar-w: 236px; }
+  html[data-palette] .content { padding: 30px 28px 72px; }
+  html[data-palette] .site-footer { padding: 0 28px 32px; }
+  html[data-palette] .home-grid { gap: 12px; }
+  html[data-palette] .article-layout { grid-template-columns: 1fr; }
+  html[data-palette] .toc { display: none; }
+}
+
+/* =========================================================
+   ≤880px：侧栏转抽屉
+   ========================================================= */
+@media (max-width: 880px) {
+  /* clip 不创建滚动容器，不会破坏 sticky；hidden 作为旧浏览器兜底 */
+  html, body { overflow-x: hidden; overflow-x: clip; }
+
+  html[data-palette] .topbar {
+    gap: 6px;
+    padding-left: calc(14px + env(safe-area-inset-left));
+    padding-right: calc(14px + env(safe-area-inset-right));
+  }
+  /* 标题自动让位：窄屏下被省略，其余控件永不挤压 */
+  html[data-palette] .topbar .site-title {
+    font-size: 17px;
+    letter-spacing: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  html[data-palette] .menu-toggle,
+  html[data-palette] .search-trigger,
+  html[data-palette] .palette-toggle,
+  html[data-palette] .theme-switch { flex-shrink: 0; }
+  html[data-palette] .search-trigger { margin-left: auto; }
+  html[data-palette] .theme-switch { margin-left: 0; }
+
+  /* 抽屉：宽度按屏幕比例，避免小屏被整块盖死 */
+  html[data-palette] .sidebar {
+    width: min(84vw, 300px);
+    padding-bottom: env(safe-area-inset-bottom);
+    -webkit-overflow-scrolling: touch;
+  }
+  html[data-palette] body.sidebar-open { overflow: hidden; }
+
+  html[data-palette] .content { padding: 24px 18px calc(60px + env(safe-area-inset-bottom)); }
+  html[data-palette] .site-footer { padding: 0 18px calc(28px + env(safe-area-inset-bottom)); }
+}
+
+/* =========================================================
+   ≤700px：手机
+   ========================================================= */
+@media (max-width: 700px) {
+  html[data-palette] .content { padding: 20px 16px calc(56px + env(safe-area-inset-bottom)); }
+  html[data-palette] .site-footer { padding: 0 16px calc(24px + env(safe-area-inset-bottom)); }
+
+  /* 顶栏：触摸目标 ≥40px，标题压缩，搜索只留图标 */
+  html[data-palette] .menu-toggle,
+  html[data-palette] .search-trigger,
+  html[data-palette] .palette-toggle { min-width: 40px; min-height: 40px; }
+  html[data-palette] .theme-switch button { min-width: 36px; height: 40px; }
+  html[data-palette] .search-trigger { padding: 0 10px; }
+  html[data-palette] .search-trigger span,
+  html[data-palette] .search-trigger kbd { display: none; }
+  html[data-palette] .topbar .site-title { font-size: 16px; }
+  html[data-palette] .nav a { padding-top: 14px; padding-bottom: 14px; }
+  html[data-palette] .copy-code { padding: 8px 12px; }
+
+  /* 表单 16px：避免 iOS Safari 聚焦时自动放大整页 */
+  html[data-palette] input[type=text],
+  html[data-palette] input[type=password],
+  html[data-palette] input[type=email],
+  html[data-palette] select,
+  html[data-palette] textarea,
+  html[data-palette] .search-panel input,
+  html[data-palette] .password-box input { font-size: 16px; }
+
+  /* 网格全部单列 */
+  html[data-palette] .home-grid,
+  html[data-palette] .post-nav,
+  html[data-palette] .friend-grid,
+  html[data-palette] .card-group { grid-template-columns: 1fr; }
+  html[data-palette] .card-group .card { min-width: 0; }
+  html[data-palette] .post-nav-item.next {
+    text-align: left;
+    border-left: 4px solid var(--accent);
+    border-right: 1px solid var(--border);
+  }
+  html[data-palette] .stats-bar { grid-template-columns: 1fr; margin-top: 0; }
+  html[data-palette] .stats-bar .stat { border-right: none; border-bottom: 1px solid var(--border); }
+  html[data-palette] .stats-bar .stat:last-child { border-bottom: none; }
+
+  /* 表格：横向滚动而非压扁列宽 */
+  html[data-palette] .content table,
+  html[data-palette] .article-body table,
+  html[data-palette] #decryptedContent table {
+    display: block;
+    width: max-content;
+    min-width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  html[data-palette] td,
+  html[data-palette] th,
+  html[data-palette] #decryptedContent td,
+  html[data-palette] #decryptedContent th { padding: 8px 10px; font-size: 14px; }
+
+  /* 两端对齐结构改竖排 */
+  html[data-palette] .res-list li { flex-direction: column; align-items: stretch; gap: 12px; }
+  html[data-palette] .res-list .btn { align-self: flex-start; }
+  html[data-palette] .friend-card img { width: 56px; height: 56px; }
+  html[data-palette] .footer-inner { gap: 10px; }
+
+  /* 字号与留白 */
+  html[data-palette] .page-title { font-size: 24px; }
+  html[data-palette] .page-sub { font-size: 14px; margin-bottom: 22px; padding-left: 0; }
+  html[data-palette] .content h1 { font-size: 23px; }
+  html[data-palette] .content h2 { font-size: 19px; }
+  html[data-palette] .content h3 { font-size: 17px; }
+  html[data-palette] .article-body { font-size: 16px; line-height: 1.8; }
+  html[data-palette] .card { padding: 14px 16px; }
+  html[data-palette] .card-list .card { padding: 12px 14px; }
+  html[data-palette] .article-meta { gap: 10px 16px; padding: 12px 14px; }
+  html[data-palette] .category-filters { gap: 8px; margin-bottom: 18px; }
+  html[data-palette] .category-filters a { padding: 8px 12px; }
+  html[data-palette] .pdf-actions { flex-wrap: wrap; }
+  html[data-palette] .tag-cloud { gap: 8px; }
+
+  /* 弹层 */
+  html[data-palette] .lightbox { padding: 16px; }
+  html[data-palette] .search-overlay { padding-top: 6vh; }
+  html[data-palette] .search-panel { width: calc(100% - 24px); max-width: 560px; }
+  html[data-palette] .password-box { padding: 24px 20px; }
+  html[data-palette] .qr-box { width: min(260px, 100%); height: auto; aspect-ratio: 1; }
+}
+
+/* =========================================================
+   ≤400px：小屏手机，进一步压缩顶栏
+   ========================================================= */
+@media (max-width: 400px) {
+  html[data-palette] .topbar {
+    gap: 4px;
+    padding-left: calc(10px + env(safe-area-inset-left));
+    padding-right: calc(10px + env(safe-area-inset-right));
+  }
+  html[data-palette] .topbar .site-title { font-size: 15px; }
+  html[data-palette] .theme-switch button { min-width: 32px; }
+  html[data-palette] .palette-toggle { min-width: 32px; }
+  html[data-palette] .search-trigger { padding: 0 8px; }
+  html[data-palette] .content { padding-left: 14px; padding-right: 14px; }
+  html[data-palette] .site-footer { padding-left: 14px; padding-right: 14px; }
+  html[data-palette] .stats-bar .stat strong { font-size: 22px; }
+  html[data-palette] .hero-banner { margin-bottom: 24px; }
+}
+
+/* 减少动效偏好：关闭抽屉滑动 */
+@media (prefers-reduced-motion: reduce) {
+  html[data-palette] .sidebar { transition: none; }
+}

@@ -8,7 +8,7 @@ function isActive(href: string): boolean {
 }
 ---
 <header class="topbar">
-  <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+  <button class="menu-toggle" id="menuToggle" type="button" aria-label="打开导航菜单" aria-controls="sidebar" aria-expanded="false"><i class="fas fa-bars"></i></button>
   <span class="site-title">{site.title}</span>
   <nav class="header-nav" aria-label="主导航">
     {site.nav.map((item) => (
