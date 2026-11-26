@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import '../styles/mono.css';
 import 'katex/dist/katex.min.css';
 import Topbar from '../components/Topbar.astro';
 import Sidebar from '../components/Sidebar.astro';
@@ -50,6 +51,8 @@ const ogImage = new URL(image, Astro.site).href;
     <link rel="icon" href="/my.jpg" type="image/jpg" />
     <script is:inline>
       (function () {
+        const savedPalette = localStorage.getItem('palette') || 'mono';
+        document.documentElement.setAttribute('data-palette', savedPalette === 'color' ? 'color' : 'mono');
         const saved = localStorage.getItem('theme') || 'system';
         const isDark = saved === 'dark' || (saved === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');

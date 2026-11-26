@@ -1,11 +1,25 @@
 ---
 import { site } from '../site';
+
+const path = Astro.url.pathname;
+function isActive(href: string): boolean {
+  if (href === '/') return path === '/';
+  return path === href || path.startsWith(href + '/');
+}
 ---
 <header class="topbar">
   <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
   <span class="site-title">{site.title}</span>
+  <nav class="header-nav" aria-label="主导航">
+    {site.nav.map((item) => (
+      <a href={item.href} class={isActive(item.href) ? 'active' : ''}>{item.label}</a>
+    ))}
+  </nav>
   <button class="search-trigger" id="searchTrigger" aria-label="搜索文章">
     <i class="fas fa-magnifying-glass"></i><span>搜索</span><kbd>/</kbd>
+  </button>
+  <button type="button" class="palette-toggle" id="paletteToggle" aria-label="切换黑白 / 彩色主题" title="切换黑白 / 彩色主题">
+    <i class="fas fa-circle-half-stroke"></i>
   </button>
   <div class="theme-switch" role="group" aria-label="主题模式">
     <button type="button" data-theme-value="light" aria-label="亮色主题"><i class="fas fa-sun"></i></button>
@@ -14,6 +28,29 @@ import { site } from '../site';
   </div>
   <div class="reading-progress" id="readingProgress"></div>
 </header>
+
+<script is:inline>
+  (function () {
+    const btn = document.getElementById('paletteToggle');
+    if (!btn) return;
+
+    function applyPalette(value) {
+      const palette = value === 'color' ? 'color' : 'mono';
+      localStorage.setItem('palette', palette);
+      document.documentElement.setAttribute('data-palette', palette);
+      const isMono = palette === 'mono';
+      btn.classList.toggle('active', isMono);
+      const label = isMono ? '切换到彩色主题' : '切换到黑白主题';
+      btn.setAttribute('aria-label', label);
+      btn.title = label;
+    }
+
+    applyPalette(document.documentElement.getAttribute('data-palette') || 'mono');
+    btn.addEventListener('click', function () {
+      applyPalette(document.documentElement.getAttribute('data-palette') === 'mono' ? 'color' : 'mono');
+    });
+  })();
+</script>
 
 <script is:inline>
   (function () {
