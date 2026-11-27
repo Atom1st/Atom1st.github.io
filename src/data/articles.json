@@ -1,5 +1,17 @@
 [
   {
+    "id": "studio",
+    "title": "震撼发布！Studio工作台",
+    "date": "2026-11-27",
+    "category": "理论",
+    "description": "",
+    "type": "article",
+    "origin": "original",
+    "access": "public",
+    "passwordHash": "",
+    "hot": false
+  },
+  {
     "id": "post-20261114-2111",
     "title": "十四岁",
     "date": "2026-11-14",
