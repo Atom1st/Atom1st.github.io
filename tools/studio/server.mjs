@@ -323,6 +323,139 @@ function writeConfig(patch) {
   return next;
 }
 
+/* ══════════════════════════ 图床：蜜蜂图床 beeimg.cn ══════════════════════════ */
+
+const IMGBED_DEFAULT_BASE = 'https://www.beeimg.cn';
+let strategyCache = { key: '', id: 0, at: 0 };
+
+function readImgbedConfig() {
+  const c = readConfig();
+  const ib = c.imgbed && typeof c.imgbed === 'object' ? c.imgbed : {};
+  return {
+    base: String(ib.base || IMGBED_DEFAULT_BASE).trim().replace(/\/+$/, '') || IMGBED_DEFAULT_BASE,
+    token: String(ib.token || ''),
+    strategyId: Math.max(0, Math.floor(Number(ib.strategyId) || 0)),
+  };
+}
+
+function writeImgbedConfig(patch) {
+  const c = readConfig();
+  const next = { ...readImgbedConfig(), ...patch };
+  next.base = String(next.base || IMGBED_DEFAULT_BASE).trim().replace(/\/+$/, '') || IMGBED_DEFAULT_BASE;
+  next.strategyId = Math.max(0, Math.floor(Number(next.strategyId) || 0));
+  c.imgbed = next;
+  writeConfig(c);
+  return next;
+}
+
+function maskToken(t) {
+  const s = String(t || '');
+  if (!s) return '';
+  return s.length <= 8 ? s.slice(0, 2) + '***' : s.slice(0, 6) + '***' + s.slice(-4);
+}
+
+/** 带超时的 fetch：图床卡住时不会拖死 Studio */
+async function beeFetch(url, opts = {}, timeoutMs = 20000) {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...opts, signal: ctl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function authHeaders(token, mode = 'auto') {
+  if (!token) return {};
+  if (mode === 'field') return {};
+  // 个人访问令牌形如 12|xxxx，走 Bearer；临时上传 token 走表单字段
+  if (mode === 'bearer' || token.includes('|')) return { Authorization: 'Bearer ' + token };
+  return {};
+}
+
+function authFields(token, mode = 'auto') {
+  if (!token) return {};
+  if (mode === 'bearer') return {};
+  if (mode === 'field') return { token };
+  // 32 位十六进制 = 临时上传 token；未知格式两种都带，兼容性最好
+  return /^[a-f0-9]{32}$/i.test(token) || !token.includes('|') ? { token } : {};
+}
+
+function multipartBody(fields, fileBuf, filename, mime) {
+  const boundary = '----StudioImgBed' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+  const parts = [];
+  for (const [k, v] of Object.entries(fields)) {
+    if (v === undefined || v === null || v === '') continue;
+    parts.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${k}"\r\n\r\n${String(v)}\r\n`, 'utf8'));
+  }
+  const safeName = String(filename || 'image.png').replace(/[\r\n"]/g, '_') || 'image.png';
+  parts.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${safeName}"\r\nContent-Type: ${mime}\r\n\r\n`, 'utf8'));
+  parts.push(fileBuf);
+  parts.push(Buffer.from(`\r\n--${boundary}--\r\n`, 'utf8'));
+  return { body: Buffer.concat(parts), contentType: `multipart/form-data; boundary=${boundary}` };
+}
+
+/** storage_id：优先用配置里手动指定的，否则自动取当前角色组的第一个策略 */
+async function getStrategyId(cfg) {
+  if (cfg.strategyId > 0) return cfg.strategyId;
+  const key = cfg.base + '|' + cfg.token;
+  if (strategyCache.key === key && Date.now() - strategyCache.at < 10 * 60 * 1000) return strategyCache.id;
+  let json;
+  try {
+    const res = await beeFetch(cfg.base + '/api/v1/strategies', { headers: authHeaders(cfg.token) });
+    json = await res.json();
+  } catch (e) {
+    throw new Error('连不上图床：' + e.message);
+  }
+  const list = json && json.data && json.data.strategies;
+  const id = Array.isArray(list) && list.length ? Number(list[0].id) : 0;
+  if (!id) throw new Error((json && json.message) || '获取储存策略失败，请检查 API 地址');
+  strategyCache = { key, id, at: Date.now() };
+  return id;
+}
+
+async function postBeeUpload(cfg, strategyId, buf, filename, mime, mode = 'auto') {
+  const fields = { strategy_id: strategyId, permission: 1, ...authFields(cfg.token, mode) };
+  const { body, contentType } = multipartBody(fields, buf, filename, mime);
+  const res = await beeFetch(cfg.base + '/api/v1/upload', {
+    method: 'POST',
+    headers: { ...authHeaders(cfg.token, mode), 'Content-Type': contentType },
+    body,
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(`图床返回 HTTP ${res.status}${json && json.message ? '：' + json.message : ''}`);
+  return json;
+}
+
+async function uploadToBeeimg(buf, name, cfg) {
+  const strategyId = await getStrategyId(cfg);
+  const filename = path.basename(String(name || 'image.png')).replace(/[\r\n"]/g, '_') || 'image.png';
+  const ext = (path.extname(filename) || '.png').toLowerCase();
+  const mime = MIME[ext] || 'application/octet-stream';
+
+  const okOf = (j) => !!(j && (j.status === true || j.status === 'success'));
+  let json = await postBeeUpload(cfg, strategyId, buf, filename, mime, 'auto');
+  if (!okOf(json) && cfg.token) {
+    // Token 格式不认识时，Bearer 与表单字段各换一次再试
+    for (const mode of ['bearer', 'field']) {
+      const retry = await postBeeUpload(cfg, strategyId, buf, filename, mime, mode);
+      if (okOf(retry)) { json = retry; break; }
+    }
+  }
+  if (!okOf(json)) throw new Error((json && json.message) || '上传失败：Token 无效或图片不符合要求');
+
+  const d = json.data || {};
+  const links = d.links || {};
+  const url = links.url || d.public_url || '';
+  if (!url) throw new Error('上传成功但图床没返回链接');
+  return {
+    url,
+    markdown: links.markdown || `![${filename}](${url})`,
+    html: links.html || `<img src="${url}" alt="${filename}" />`,
+    raw: json,
+  };
+}
+
 /* ══════════════════════════ 写作习惯数据 ══════════════════════════ */
 
 const DEFAULT_HABIT = {
@@ -1020,6 +1153,77 @@ async function handleApi(req, res, url) {
     while (fs.existsSync(path.join(dir, file))) file = `${base}-${n++}${ext}`;
     await fsp.writeFile(path.join(dir, file), buf);
     return sendJson(res, 200, { ok: true, url: `/uploads/${month}/${file}` });
+  }
+
+  /* ---- 图床（蜜蜂图床） ---- */
+  if (seg === 'imgbed') {
+    const action = parts[2] || '';
+
+    if ((action === 'config' || !action) && method === 'GET') {
+      const c = readImgbedConfig();
+      return sendJson(res, 200, {
+        base: c.base,
+        hasToken: !!c.token,
+        tokenMasked: maskToken(c.token),
+        strategyId: c.strategyId,
+      });
+    }
+
+    if ((action === 'config' || !action) && method === 'POST') {
+      const body = await readJson(req);
+      const patch = {};
+      if (body.base !== undefined) patch.base = String(body.base || '').trim();
+      // token 留空 = 保留原值，避免点一次「保存」就把凭据清掉
+      if (body.token !== undefined && String(body.token || '').trim()) {
+        patch.token = String(body.token).trim();
+      }
+      if (body.strategyId !== undefined) patch.strategyId = Number(body.strategyId) || 0;
+      const c = writeImgbedConfig(patch);
+      strategyCache = { key: '', id: 0, at: 0 };
+      return sendJson(res, 200, {
+        ok: true,
+        base: c.base,
+        hasToken: !!c.token,
+        tokenMasked: maskToken(c.token),
+        strategyId: c.strategyId,
+      });
+    }
+
+    if (action === 'check' && method === 'POST') {
+      const c = readImgbedConfig();
+      if (!c.token) return sendJson(res, 200, { ok: false, message: '还没填 Token' });
+      try {
+        const probe = await beeFetch(c.base + '/api/v1/strategies', { headers: authHeaders(c.token) });
+        const json = await probe.json();
+        const list = json && json.data && json.data.strategies;
+        const sid = Array.isArray(list) && list.length ? Number(list[0].id) : 0;
+        if (!sid) throw new Error((json && json.message) || '获取储存策略失败，请检查 API 地址');
+        // 个人访问令牌若只拿到游客策略，说明 Token 没被站点识别
+        if (c.token.includes('|') && /游客|guest/i.test(String(list[0].name || ''))) {
+          return sendJson(res, 200, {
+            ok: false,
+            strategyId: sid,
+            message: '地址可达，但 Token 未生效：当前按游客身份。请检查 Token 是否填对。',
+          });
+        }
+        return sendJson(res, 200, { ok: true, strategyId: sid, message: `连接正常 · ${list[0].name || '储存策略'} #${sid}` });
+      } catch (e) {
+        return sendJson(res, 200, { ok: false, message: e.message });
+      }
+    }
+
+    if (action === 'upload' && method === 'POST') {
+      const c = readImgbedConfig();
+      const name = String(url.searchParams.get('name') || 'image.png');
+      const buf = await readBody(req, 24 * 1024 * 1024);
+      if (!buf.length) return fail(res, 400, '空文件');
+      try {
+        const r = await uploadToBeeimg(buf, name, c);
+        return sendJson(res, 200, { ok: true, ...r });
+      } catch (e) {
+        return sendJson(res, 200, { ok: false, message: e.message || '上传失败' });
+      }
+    }
   }
 
   /* ---- 打开文件所在目录 ---- */

@@ -1253,6 +1253,174 @@ function bindEvents() {
   });
 }
 
+/* ─────────────────────── 图床（蜜蜂图床） ─────────────────────── */
+
+const ibState = { results: [], busy: false };
+
+function ibStatus(msg, isErr = false) {
+  const el = $('#ibStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.toggle('err', !!isErr);
+  el.classList.toggle('ok', !isErr && !!msg && msg !== '—' && !msg.startsWith('正在'));
+}
+
+async function loadImgbedConfig() {
+  try {
+    const c = await api('/api/imgbed/config');
+    $('#ibBase').value = c.base || 'https://www.beeimg.cn';
+    $('#ibToken').value = '';
+    $('#ibToken').placeholder = c.hasToken
+      ? `${c.tokenMasked}（已保存，留空则不改动）`
+      : '粘贴 Token';
+    ibStatus(c.hasToken ? `已保存 Token ${c.tokenMasked}` : '还没填 Token，填完点「保存配置」');
+  } catch (e) {
+    ibStatus('读取图床配置失败：' + e.message, true);
+  }
+}
+
+function ibFallbackCopy(text, done) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); done(); }
+  catch { toast('复制失败，请手动复制', true); }
+  ta.remove();
+}
+
+function ibCopy(text, label) {
+  const done = () => toast(label + '已复制');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => ibFallbackCopy(text, done));
+  } else {
+    ibFallbackCopy(text, done);
+  }
+}
+
+function renderIbResults() {
+  const el = $('#ibResults');
+  if (!el) return;
+  if (!ibState.results.length) { el.innerHTML = ''; return; }
+  el.innerHTML = ibState.results.map((r, i) => `
+    <div class="ib-result">
+      <img class="ib-thumb" src="${esc(r.url)}" alt="" loading="lazy" />
+      <div class="ib-body">
+        <div class="ib-name" title="${esc(r.name)}">${esc(r.name)}</div>
+        <div class="ib-url mono" title="${esc(r.url)}">${esc(r.url)}</div>
+        <div class="ib-actions">
+          <button class="btn btn-sm" data-ib="url" data-i="${i}">复制链接</button>
+          <button class="btn btn-sm" data-ib="md" data-i="${i}">复制 MD</button>
+          <button class="btn btn-sm btn-accent" data-ib="insert" data-i="${i}">插入正文</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+async function ibUploadFiles(files) {
+  const list = Array.from(files || []).filter(f => f && f.type && f.type.startsWith('image/'));
+  if (!list.length) return;
+  if (ibState.busy) { toast('正在上传，稍等', true); return; }
+  ibState.busy = true;
+  const prog = $('#ibProgress');
+  prog.hidden = false;
+  for (let i = 0; i < list.length; i++) {
+    const f = list[i];
+    prog.textContent = `上传中 ${i + 1}/${list.length} · ${f.name}`;
+    try {
+      const buf = await f.arrayBuffer();
+      const res = await fetch('/api/imgbed/upload?name=' + encodeURIComponent(f.name || 'image.png'), {
+        method: 'POST',
+        headers: { 'X-Studio': '1', 'Content-Type': 'application/octet-stream' },
+        body: buf,
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || '上传失败');
+      if (!json.ok) throw new Error(json.message || '上传失败');
+      ibState.results.unshift({ ...json, name: f.name });
+      renderIbResults();
+      toast('已上传：' + f.name);
+    } catch (e) {
+      ibStatus('上传失败：' + e.message, true);
+    }
+  }
+  prog.hidden = true;
+  prog.textContent = '';
+  ibState.busy = false;
+  $('#ibFile').value = '';
+}
+
+/* 图床事件独立绑定，不碰原有逻辑 */
+(function bindImgbed() {
+  const drop = $('#ibDrop');
+  const fileInput = $('#ibFile');
+  if (!drop || !fileInput) return;
+
+  drop.addEventListener('click', () => fileInput.click());
+  drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('drag'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+  drop.addEventListener('drop', (e) => {
+    e.preventDefault();
+    drop.classList.remove('drag');
+    ibUploadFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', (e) => ibUploadFiles(e.target.files));
+
+  $('#ibToggle').addEventListener('click', (e) => {
+    const input = $('#ibToken');
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    e.target.textContent = show ? '隐藏' : '显示';
+  });
+
+  $('#ibSave').addEventListener('click', async () => {
+    const patch = { base: $('#ibBase').value.trim() || 'https://www.beeimg.cn' };
+    const t = $('#ibToken').value.trim();
+    if (t) patch.token = t;
+    try {
+      const c = await api('/api/imgbed/config', { method: 'POST', body: patch });
+      $('#ibToken').value = '';
+      $('#ibToken').placeholder = c.hasToken
+        ? `${c.tokenMasked}（已保存，留空则不改动）`
+        : '粘贴 Token';
+      ibStatus(c.hasToken ? `已保存 · ${c.tokenMasked}` : '配置已保存');
+      toast('图床配置已保存');
+    } catch (e) {
+      ibStatus(e.message, true);
+    }
+  });
+
+  $('#ibCheck').addEventListener('click', async () => {
+    ibStatus('正在连接图床…');
+    try {
+      const r = await api('/api/imgbed/check', { method: 'POST', body: {} });
+      ibStatus(r.message || (r.ok ? '连接正常' : '连接失败'), !r.ok);
+    } catch (e) {
+      ibStatus(e.message, true);
+    }
+  });
+
+  $('#ibResults').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-ib]');
+    if (!btn) return;
+    const r = ibState.results[Number(btn.dataset.i)];
+    if (!r) return;
+    const kind = btn.dataset.ib;
+    if (kind === 'url') ibCopy(r.url, '链接');
+    else if (kind === 'md') ibCopy(r.markdown, 'Markdown');
+    else if (kind === 'insert') {
+      if (!state.current) { toast('先打开一篇文章再插入', true); return; }
+      if (!state.vditor) return;
+      state.vditor.insertValue(`\n${r.markdown}\n`);
+      state.lastInputAt = Date.now();
+      markDirty();
+      toast('已插入正文');
+    }
+  });
+})();
+
 /* ─────────────────────── 启动 ─────────────────────── */
 
 (async function boot() {
@@ -1272,6 +1440,7 @@ function bindEvents() {
   checkBackendVersion();
   await loadHabit();
   loadDrafts().catch(() => {});
+  loadImgbedConfig().catch(() => {});
 
   const last = localStorage.getItem('studio-last');
   const target = state.posts.find(p => p.slug === last) || state.posts[0];

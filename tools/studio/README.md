@@ -2,7 +2,7 @@
 
 一个跑在本机的单页写作工具，专为这个 Astro 博客做的：左边管文章、中间写 Markdown、右边改属性，写完点一下「一键发布」就 build + 推到 GitHub。除了管网站，还带一套轻量的写作习惯机制——每日目标、连续天数、专注冲刺、随机草稿、到点提醒。
 
-- 不联网、不上传、不依赖任何第三方服务
+- 写作本体不联网、不上传；只有主动用「图床」时才请求蜜蜂图床
 - 数据就是你仓库里的 `src/content/posts/*.md`，没有第二份副本
 - 编辑器是 Vditor（本地离线副本，放在 `vendor/`），支持所见即所得 / 分屏 / 源码三种模式
 
@@ -42,6 +42,16 @@ STUDIO_PORT=8090 node tools/studio/server.mjs
 5. GitHub Actions 自动部署，1–2 分钟后上线
 
 日志实时滚动在下方抽屉里，任何一步失败会立刻中断并停在那一步。
+
+### 图床
+
+右栏「图床」Tab 接的是[蜜蜂图床](https://www.beeimg.cn)。填入你自己的 API Token 后点「保存配置」，Token 只写在本机 `tools/studio/.studio.json`，不进文章、不回传明文，重新打开也不会显示原文。
+
+- 点选或拖入图片（可多选），上传完直接拿到直链
+- 每条结果可「复制链接」「复制 MD」，或「插入正文」写进当前文章
+- 「测试连接」检查接口是否可达；若 Token 没生效会提示当前按游客身份上传
+- API 地址默认 `https://www.beeimg.cn`，自建站可改；`storage_id` 由后端自动获取
+- 编辑器自带的图片上传仍是本地 `public/uploads/`，和这里互不干扰
 
 ### 养写作习惯
 
@@ -94,7 +104,7 @@ STUDIO_PORT=8090 node tools/studio/server.mjs
 | 文件 | 内容 | 会提交吗 |
 | --- | --- | --- |
 | `src/content/posts/*.md` | 文章源文件 | 会（受保护的除外） |
-| `tools/studio/.studio.json` | 发布偏好（是否构建 / 加密） | 不会 |
+| `tools/studio/.studio.json` | 发布偏好 + 图床 Token（本机明文） | 不会 |
 | `tools/studio/.studio-habit.json` | 写作习惯统计（每日字数 / 专注 / 连续天数） | 不会 |
 | `tools/studio/drafts/*.json` | 草稿箱 | 不会 |
 | 浏览器 localStorage | 明暗主题、选题标签、上次打开的文章 | — |

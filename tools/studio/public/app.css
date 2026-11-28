@@ -1022,3 +1022,69 @@ body.focus-mode .rail { display: none !important; }
 }
 .ver-warn button:hover { background: rgba(255,255,255,0.32); }
 .ver-warn #btnWarnDismiss { border-color: transparent; background: transparent; font-size: 14px; }
+
+/* ─────────────────────── 图床 ─────────────────────── */
+
+.ib-status { margin: 7px 0 0; min-height: 16px; }
+.ib-status.ok { color: var(--ok); }
+.ib-status.err { color: var(--danger); }
+
+.ib-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 116px;
+  padding: 14px 10px;
+  border: 1px dashed var(--border-strong);
+  background: var(--surface-2);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color .12s, background .12s;
+}
+.ib-drop:hover { border-color: var(--accent); }
+.ib-drop.drag { border-color: var(--accent); background: var(--accent-soft); }
+.ib-drop .ib-mark { font: 700 22px/1 var(--mono); color: var(--accent); }
+.ib-drop b { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.ib-drop .hint { font-size: 11px; }
+
+.ib-progress {
+  margin: 8px 0 0;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.ib-progress[hidden] { display: none; }
+
+.ib-results { margin-top: 4px; }
+.ib-result {
+  display: flex;
+  gap: 9px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ib-thumb {
+  width: 46px;
+  height: 46px;
+  flex: none;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.ib-body { min-width: 0; flex: 1; }
+.ib-name {
+  font-size: 11px;
+  color: var(--text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ib-url {
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--muted);
+  word-break: break-all;
+  line-height: 1.35;
+}
+.ib-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }

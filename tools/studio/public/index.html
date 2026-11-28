@@ -204,6 +204,7 @@
     <div class="insp-tabs">
       <button class="insp-tab active" data-tab="meta">属性</button>
       <button class="insp-tab" data-tab="ship">发布</button>
+      <button class="insp-tab" data-tab="imgbed">图床</button>
       <button class="insp-tab" data-tab="help">帮助</button>
     </div>
 
@@ -329,6 +330,42 @@
           <div><span>文章总数</span><b id="kPosts" class="mono">—</b></div>
           <div><span>最近提交</span><b id="kCommit" class="mono">—</b></div>
         </div>
+      </div>
+
+      <!-- 图床 -->
+      <div class="insp-pane" data-pane="imgbed">
+        <div class="field">
+          <label>API 地址</label>
+          <input id="ibBase" class="mono" placeholder="https://www.beeimg.cn" />
+          <p class="hint">蜜蜂图床（beeimg.cn）。一般不用改，除非你用自建站点。</p>
+        </div>
+
+        <div class="field">
+          <label>API Token</label>
+          <div class="field-row">
+            <input id="ibToken" type="password" class="mono" placeholder="粘贴 Token" autocomplete="off" spellcheck="false" />
+            <button class="btn btn-sm" id="ibToggle" title="显示 / 隐藏">显示</button>
+          </div>
+          <p class="hint">只存在本机 .studio.json，不写进文章，也不回传明文。</p>
+        </div>
+
+        <div class="btn-grid">
+          <button class="btn btn-sm" id="ibSave">保存配置</button>
+          <button class="btn btn-sm" id="ibCheck">测试连接</button>
+        </div>
+        <p class="hint ib-status" id="ibStatus">—</p>
+
+        <div class="divider"></div>
+
+        <div class="ib-drop" id="ibDrop">
+          <div class="ib-mark">↑</div>
+          <b>点击选择图片，或拖进来</b>
+          <span class="hint">支持 JPG / PNG / GIF / WEBP，可多选</span>
+          <input type="file" id="ibFile" accept="image/*" multiple hidden />
+        </div>
+
+        <p class="hint ib-progress" id="ibProgress" hidden></p>
+        <div class="ib-results" id="ibResults"></div>
       </div>
 
       <!-- 帮助 -->
